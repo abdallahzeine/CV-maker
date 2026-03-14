@@ -1,0 +1,50 @@
+{
+  "10358797-ac48-49ae-ae47-c72e2e2aa7c5": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "d9cef551-3f15-48cc-8b71-effdbddf55bd": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "1920b7bb-05e8-42f1-ba06-5e3c22e395dc": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "d920b92e-5b4b-4de8-8315-b22ee7acd3e2": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "fb3c4082-4644-4818-865e-e11bc6fc6f8b": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "ccb0bfd6-793f-46e4-9319-2d1a3057a706": {
+    "provider": "google-genai",
+    "model": "gemini-flash-lite-latest",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": null
+  },
+  "66a14c9f-0905-468f-bf61-3553fe27c3ad": {
+    "provider": "lmstudio",
+    "model": "qwen/qwen3.5-9b",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": "http://localhost:1234/v1"
+  },
+  "c1eae462-dbc4-4c9c-8f25-c495264ff9d2": {
+    "provider": "lmstudio",
+    "model": "qwen/qwen3.5-9b",
+    "apiKey": "AIzaSyBL_XaUnyVI0ERQbb67175RFJMzmqnr6LU",
+    "baseUrl": "http://localhost:1234/v1"
+  }
+}

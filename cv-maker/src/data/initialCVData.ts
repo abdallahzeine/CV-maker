@@ -1,0 +1,177 @@
+import type { CVData } from '../types';
+
+export const initialCVData: CVData = {
+  header: {
+    name: 'Abdallah Zeine Elabidine',
+    location: 'Jeddah, Saudi Arabia',
+    phone: '+966566454894',
+    email: 'abdallahzeine@gmail.com',
+    socialLinks: [
+      {
+        id: 'link-1',
+        url: 'https://github.com/abdallahzeine',
+        label: 'GitHub',
+        iconType: 'github',
+        displayOrder: 0,
+      },
+      {
+        id: 'link-2',
+        url: 'https://linkedin.com/in/abdallahzeine',
+        label: 'LinkedIn',
+        iconType: 'linkedin',
+        displayOrder: 1,
+      },
+      {
+        id: 'link-3',
+        url: 'https://abdallahzeine.dev',
+        label: 'Portfolio',
+        iconType: 'portfolio',
+        color: '#9333EA',
+        displayOrder: 2,
+      },
+    ],
+  },
+  sections: [
+    {
+      id: 'summary',
+      type: 'summary',
+      title: 'PROFESSIONAL SUMMARY',
+      items: [
+        {
+          id: 'summary-1',
+          body: 'AI Engineer specializing in Django web development, building AI-powered applications. Committed to solving complex problems, driving innovation, and mastering new technologies.',
+        },
+      ],
+    },
+    {
+      id: 'education',
+      type: 'education',
+      title: 'EDUCATION',
+      items: [
+        {
+          id: 'edu-1',
+          title: 'Bachelor of Applied Science - BASc Data Sciences & Artificial Intelligence',
+          subtitle: 'Al Ahliyya Amman University · GPA: 3.71/4.00',
+          date: '10/2022 - Present',
+        },
+      ],
+    },
+    {
+      id: 'skills',
+      type: 'skills',
+      title: 'SKILLS',
+      items: [
+        {
+          id: 'skills-1',
+          skillGroups: [
+            { id: 'sg-1', label: 'Languages & DBMS', value: 'Python, JavaScript, SQL, PostgreSQL, MySQL' },
+            { id: 'sg-2', label: 'Frameworks & Libraries', value: 'Django, Langchain, FastAPI, HTMX, Tailwind CSS, PyTorch, TensorFlow, scikit-learn, React' },
+            { id: 'sg-3', label: 'DevOps', value: 'External API integrations, Docker, Git, GitHub, Nginx' },
+            { id: 'sg-4', label: 'Hobbies', value: 'Photographer, Photo editing' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'certifications',
+      type: 'certifications',
+      title: 'CERTIFICATIONS',
+      items: [
+        {
+          id: 'cert-1',
+          title: 'IBM AI Engineering Professional',
+          subtitle: 'IBM',
+          date: '06/2025',
+        },
+        {
+          id: 'cert-2',
+          title: 'Meta Back-End Developer',
+          subtitle: 'Meta',
+          date: '02/2025',
+        },
+      ],
+    },
+    {
+      id: 'projects',
+      type: 'projects',
+      title: 'PROJECTS',
+      items: [
+        {
+          id: 'proj-1',
+          title: 'FinAI – AI-Powered Fintech Assistant',
+          bullets: [
+            'Built a full-featured AI-powered Personal banker application.',
+            'Helps users efficiently manage accounts, discover offers, and make informed decisions.',
+            '<strong>Tech:</strong> Django, HTMX, Tailwind CSS, External API integrations (httpx/requests)',
+          ],
+        },
+        {
+          id: 'proj-2',
+          title: 'Hfawa – Charity Event Scheduling System',
+          bullets: [
+            'Developed a web system for my FIRST CUSTOMER to streamline event scheduling for new Umrah and Hajj visitors.',
+            'Powered by PWA web technology to provide a mobile-friendly experience.',
+            '<strong>Tech:</strong> Django, HTMX, Tailwind CSS, PWA, REST API, Nginx, VPS hosting',
+          ],
+        },
+        {
+          id: 'proj-3',
+          title: 'Django OCR System – AI-Powered Data Extraction',
+          bullets: [
+            'Built a structured data extraction system for invoices and quotations using the Gemini API.',
+            'Leveraged LangChain and advanced prompt engineering to accurately extract product lists and save structured quotes.',
+            'Containerized and deployed the application using Docker for sharing APP with others.',
+            '<strong>Tech:</strong> Django, LangChain, Gemini API, Docker, Prompt Engineering',
+          ],
+        },
+        {
+          id: 'proj-4',
+          title: 'OCR Deep Learning Model',
+          bullets: [
+            'Designed and implemented a custom OCR architecture in PyTorch, with advanced optimization techniques to improve recognition performance.',
+            'Achieved 93% accuracy on real-world tests with 1,000+ images, successfully solving complex CAPTCHA designs.',
+            '<strong>Tech:</strong> PyTorch, Tkinter, Python',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'awards',
+      type: 'awards',
+      title: 'AWARDS & SCHOLARSHIPS',
+      items: [
+        {
+          id: 'award-1',
+          title: '3rd Place in Fintech Rally: University Edition',
+          subtitle: 'JOPAC & JOIN Fincubator',
+          date: '07/2025',
+        },
+        {
+          id: 'award-2',
+          title: 'Local Programming Contest',
+          subtitle: 'Al Ahliyya Amman University',
+          date: '11/2023',
+        },
+      ],
+    },
+    {
+      id: 'volunteering',
+      type: 'volunteering',
+      title: 'VOLUNTEERING & LEADERSHIP',
+      items: [
+        {
+          id: 'vol-1',
+          title: 'IEEE CS Chapter - AAU Club',
+          role: 'Event Coordinator',
+          date: '03/2025 - Present',
+        },
+        {
+          id: 'vol-2',
+          title: 'Data Science & AI - AAU Club',
+          role: 'Course Manager',
+          date: '10/2024 - 06/2025',
+        },
+      ],
+    },
+  ],
+};

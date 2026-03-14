@@ -1,0 +1,302 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* ── Print styles ─────────────────────────────── */
+@media print {
+  /* Reset page chrome completely */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Kill the editor wrapper layout */
+  #root {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+  }
+
+  /* Main page area: remove editor top-padding and background */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    display: block !important;
+    min-height: unset !important;
+  }
+
+  /* CV card: remove shadow, rounding, and constrain to A4 */
+  #cv-document {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 1.5cm 2cm !important;
+    min-height: unset !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  svg {
+    display: inline !important;
+  }
+
+  a {
+    color: black !important;
+    text-decoration: none !important;
+  }
+
+  .avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hide ALL editor UI */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Remove focus highlight from editable fields */
+  [contenteditable],
+  [contenteditable]:focus {
+    background: transparent !important;
+    outline: none !important;
+  }
+}
+
+/* ── Editor Chrome (screen only) ──────────────── */
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #f0f2f5;
+}
+
+/* contentEditable reset */
+[contenteditable] {
+  outline: none;
+  caret-color: #3b82f6;
+}
+
+[contenteditable]:focus {
+  background: #eff6ff;
+  border-radius: 2px;
+}
+
+/* ── Table Styles for Chat ───────────────────── */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+
+.prose table th,
+.prose table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.prose table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.prose table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.prose table tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* ── Link Management Styles ───────────────────── */
+
+/* Smooth drag and drop animations */
+.link-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  cursor: grabbing;
+}
+
+/* Link card hover effects */
+.link-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Icon button hover animation */
+.icon-button {
+  transition: all 0.2s ease-out;
+}
+
+.icon-button:hover {
+  transform: scale(1.1);
+}
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Modal animations */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modalBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-backdrop {
+  animation: modalBackdropFadeIn 0.2s ease-out;
+}
+
+/* Icon selector grid animation */
+.icon-grid-item {
+  transition: all 0.15s ease-out;
+}
+
+.icon-grid-item:hover {
+  transform: scale(1.05);
+}
+
+.icon-grid-item.selected {
+  animation: iconSelect 0.2s ease-out;
+}
+
+@keyframes iconSelect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Focus visible styles for accessibility */
+.link-focus:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Print styles for links */
+@media print {
+  .social-link-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #374151;
+    text-decoration: none;
+  }
+  
+  .social-link-print svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Ensure links are visible in print */
+  header a[href] {
+    color: black !important;
+    text-decoration: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\:flex {
+    display: flex !important;
+  }
+
+  .print\:inline-flex {
+    display: inline-flex !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure SVG icons render in print */
+  .print\:inline-flex svg {
+    display: inline-block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Color input styling */
+input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+/* Scrollbar styling for icon selector */
+.icon-selector-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.icon-selector-scroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.icon-selector-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.icon-selector-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
