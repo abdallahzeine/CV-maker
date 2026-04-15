@@ -1,15 +1,28 @@
 import { useState, useCallback, useEffect } from 'react';
 import { initialCVData } from './data/initialCVData';
 import type { CVData, CVItem, CVSection } from './types';
-import { moveItem, newItem } from './utils/helpers';
+import { arrayMove } from '@dnd-kit/sortable';
+import { moveItem, newItem, defaultLayoutFor } from './utils/helpers';
 import { loadCVData, saveCVData, clearCVData } from './utils/settings';
-import { Toolbar, HeaderSection, SectionContent, EditableText, ReorderButtons, SectionModal, DeleteButton } from './components';
+import { Toolbar, SectionModal, CVDocument } from './components';
+import { SidePanel } from './components/SidePanel';
+import { SectionLayoutContent } from './components/SectionLayoutPanel';
+import { loadSidePanelWidth, saveSidePanelWidth } from './utils/sidePanel';
+import { sectionRegistry } from './sections/registry';
+
+type PanelType = 'layout-settings';
+
+interface PanelState {
+  type: PanelType;
+  sectionId?: string;
+}
 
 export default function App() {
   const [cv, setCv] = useState<CVData>(() => loadCVData());
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
+  const [panel, setPanel] = useState<PanelState | null>(null);
+  const [panelWidth, setPanelWidth] = useState(loadSidePanelWidth);
 
-  // Auto-save CV data to localStorage when it changes
   useEffect(() => {
     saveCVData(cv);
   }, [cv]);
@@ -24,6 +37,10 @@ export default function App() {
 
   const moveSection = useCallback((sIdx: number, delta: -1 | 1) => {
     setCv((prev) => ({ ...prev, sections: moveItem(prev.sections, sIdx, delta) }));
+  }, []);
+
+  const reorderSections = useCallback((oldIndex: number, newIndex: number) => {
+    setCv((prev) => ({ ...prev, sections: arrayMove(prev.sections, oldIndex, newIndex) }));
   }, []);
 
   const changeItem = useCallback((sIdx: number, iIdx: number, item: CVItem) => {
@@ -44,6 +61,14 @@ export default function App() {
     });
   }, []);
 
+  const reorderItems = useCallback((sIdx: number, oldIndex: number, newIndex: number) => {
+    setCv((prev) => {
+      const sections = [...prev.sections];
+      sections[sIdx] = { ...sections[sIdx], items: arrayMove(sections[sIdx].items, oldIndex, newIndex) };
+      return { ...prev, sections };
+    });
+  }, []);
+
   const deleteItem = useCallback((sIdx: number, iIdx: number) => {
     setCv((prev) => {
       const sections = [...prev.sections];
@@ -53,31 +78,39 @@ export default function App() {
   }, []);
 
   const addSection = useCallback((section: CVSection) => {
-    setCv((prev) => ({
-      ...prev,
-      sections: [...prev.sections, section],
-    }));
+    const withLayout: CVSection = section.layout
+      ? section
+      : { ...section, layout: defaultLayoutFor(section.type) };
+    setCv((prev) => ({ ...prev, sections: [...prev.sections, withLayout] }));
   }, []);
 
   const deleteSection = useCallback((sIdx: number) => {
     setCv((prev) => {
       if (prev.sections.length <= 1) return prev;
-      return {
-        ...prev,
-        sections: prev.sections.filter((_, i) => i !== sIdx),
-      };
+      return { ...prev, sections: prev.sections.filter((_, i) => i !== sIdx) };
     });
   }, []);
 
   const addItem = useCallback((sIdx: number) => {
     setCv((prev) => {
       const sections = [...prev.sections];
-      sections[sIdx] = { ...sections[sIdx], items: [...sections[sIdx].items, newItem(sections[sIdx].type)] };
+      sections[sIdx] = {
+        ...sections[sIdx],
+        items: [...sections[sIdx].items, newItem(sections[sIdx].type)],
+      };
       return { ...prev, sections };
     });
   }, []);
 
-  const handlePrint = () => window.print();
+  const handlePanelWidthChange = useCallback((w: number) => {
+    setPanelWidth(w);
+    saveSidePanelWidth(w);
+  }, []);
+
+  const handlePrint = () => {
+    setPanel(null);
+    setTimeout(() => window.print(), 300);
+  };
 
   const handleReset = () => {
     if (window.confirm('Reset CV to original data? All changes will be lost.')) {
@@ -86,58 +119,64 @@ export default function App() {
     }
   };
 
+  const openPanel = useCallback((type: PanelType, sectionId?: string) => {
+    setPanel({ type, sectionId });
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setPanel(null);
+  }, []);
+
+  const panelOpen = panel !== null;
+  const effectiveWidth = panelOpen ? panelWidth : 0;
+
   return (
-    <>
+    <div className="transition-[margin-right] duration-300 ease-in-out" style={{ marginRight: effectiveWidth }}>
       <Toolbar
         onReset={handleReset}
         onPrint={handlePrint}
         onAddSection={() => setSectionModalOpen(true)}
       />
-
-      <SectionModal
-        isOpen={sectionModalOpen}
-        onClose={() => setSectionModalOpen(false)}
-        onAddSection={addSection}
+      {sectionModalOpen && (
+        <SectionModal
+          onClose={() => setSectionModalOpen(false)}
+          onAddSection={addSection}
+        />
+      )}
+      <CVDocument
+        cv={cv}
+        onUpdateHeader={updateHeader}
+        onUpdateSection={updateSection}
+        onMoveSection={moveSection}
+        onDeleteSection={deleteSection}
+        onReorderSections={reorderSections}
+        onChangeItem={changeItem}
+        onMoveItem={moveItem_}
+        onReorderItems={reorderItems}
+        onDeleteItem={deleteItem}
+        onAddItem={addItem}
+        onOpenPanel={openPanel}
       />
-
-      {/* CV page wrapper */}
-      <main className="min-h-screen pt-8 pb-24 px-4 flex justify-center print:pt-0 print:pb-0 print:px-0 print:block print:min-h-0 print:bg-white">
-        <div
-          id="cv-document"
-          className="bg-white w-full max-w-4xl mx-auto shadow-lg rounded-sm px-9 py-8 font-sans text-gray-800 leading-normal print:shadow-none print:rounded-none print:max-w-full print:px-0 print:py-0"
-        >
-          <HeaderSection header={cv.header} onChange={updateHeader} />
-
-          {cv.sections.map((section, sIdx) => (
-            <div key={section.id}>
-              <hr className="border-t border-gray-300 mb-2" />
-              <section className="mb-3">
-                <div className="flex items-center gap-1 mb-3">
-                  <div className="no-print flex items-center gap-1">
-                    <ReorderButtons index={sIdx} total={cv.sections.length} onMove={(d: -1 | 1) => moveSection(sIdx, d)} />
-                    <DeleteButton onClick={() => deleteSection(sIdx)} title="Delete section" />
-                  </div>
-                  <h2 className="text-lg font-bold text-gray-800 flex-1">
-                    <EditableText
-                      value={section.title}
-                      onChange={(v: string) => updateSection(sIdx, { ...section, title: v })}
-                      className="text-lg font-bold text-gray-800"
-                      placeholder="SECTION TITLE"
-                    />
-                  </h2>
-                </div>
-                <SectionContent
-                  section={section}
-                  onChangeItem={(iIdx, item) => changeItem(sIdx, iIdx, item)}
-                  onMoveItem={(iIdx, d) => moveItem_(sIdx, iIdx, d)}
-                  onDeleteItem={(iIdx) => deleteItem(sIdx, iIdx)}
-                  onAddItem={() => addItem(sIdx)}
-                />
-              </section>
-            </div>
-          ))}
-        </div>
-      </main>
-    </>
+      <SidePanel
+        open={panelOpen}
+        onClose={closePanel}
+        width={panelWidth}
+        onWidthChange={handlePanelWidthChange}
+        title={panel?.type === 'layout-settings' ? 'Layout Settings' : ''}
+        subtitle={panel?.type === 'layout-settings' && panel.sectionId != null ? (() => { const s = cv.sections.find((x) => x.id === panel.sectionId); return s ? `${(sectionRegistry[s.type] ?? sectionRegistry.custom).label} · ${s.title}` : undefined; })() : undefined}
+      >
+        {panel?.type === 'layout-settings' && panel.sectionId != null && (() => {
+          const panelSection = cv.sections.find((x) => x.id === panel.sectionId);
+          if (!panelSection) return null;
+          const panelSIdx = cv.sections.indexOf(panelSection);
+          return (
+            <SectionLayoutContent
+              section={panelSection}
+              onChangeLayout={(layout) => updateSection(panelSIdx, { ...panelSection, layout })}
+            />
+          );
+        })()}
+      </SidePanel>
+    </div>
   );
 }

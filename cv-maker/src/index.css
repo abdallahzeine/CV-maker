@@ -72,6 +72,11 @@
   }
 }
 
+/* ── PDF export — hide editor UI same as print ──── */
+[data-exporting] .no-print {
+  display: none !important;
+}
+
 /* ── Editor Chrome (screen only) ──────────────── */
 body {
   margin: 0;
@@ -299,4 +304,14 @@ input[type="color"]::-webkit-color-swatch {
 
 .icon-selector-scroll::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* SidePanel resize handle */
+.side-panel-resizing {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.side-panel-resizing * {
+  pointer-events: none !important;
 }

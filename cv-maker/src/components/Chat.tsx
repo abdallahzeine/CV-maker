@@ -20,7 +20,7 @@ export function Toolbar({ onReset, onPrint, onAddSection }: ToolbarProps) {
         Reset
       </button>
       <button onClick={onPrint}
-        className="px-4 py-1.5 text-sm rounded-xl bg-gray-900 text-white hover:bg-gray-700 transition-colors shadow-sm flex items-center gap-1.5">
+        className="px-3 py-1.5 text-sm rounded-xl border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors shadow-sm flex items-center gap-1.5">
         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a1 1 0 001 1h8a1 1 0 001-1v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a1 1 0 00-1-1H6a1 1 0 00-1 1zm2 0h6v3H7V4zm-1 9h8v3H6v-3zm8-4a1 1 0 110 2 1 1 0 010-2z" clipRule="evenodd" />
         </svg>

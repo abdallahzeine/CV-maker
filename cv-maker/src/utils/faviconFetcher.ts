@@ -47,7 +47,7 @@ export const fetchFavicon = async (url: string): Promise<FaviconResult> => {
     }
 
     return { url: null, error: 'No favicon found', isLoading: false };
-  } catch (error) {
+  } catch {
     return { url: null, error: 'Failed to fetch favicon', isLoading: false };
   }
 };

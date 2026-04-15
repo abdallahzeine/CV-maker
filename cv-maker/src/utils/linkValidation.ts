@@ -39,7 +39,7 @@ export const validateUrl = (input: string): ValidationResult => {
   if (url.startsWith('tel:')) {
     const phonePart = url.slice(4);
     // Basic phone validation - allows various formats
-    const isValidPhone = phonePart.length >= 7 && /^[\d\s\+\-\(\)\.]+$/.test(phonePart);
+    const isValidPhone = phonePart.length >= 7 && /^[\d\s+\-().]+$/.test(phonePart);
     
     return {
       isValid: isValidPhone,
@@ -93,7 +93,7 @@ export const validateUrl = (input: string): ValidationResult => {
       normalizedUrl: url,
       detectedIcon: detectIconTypeFromUrl(url),
     };
-  } catch (error) {
+  } catch {
     return {
       isValid: false,
       error: 'Invalid URL format',

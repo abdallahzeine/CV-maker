@@ -18,7 +18,6 @@ import {
 import type { SocialLink } from '../../types';
 import { LinkCard } from './LinkCard';
 import { LinkEditor } from './LinkEditor';
-import { uid } from '../../utils/helpers';
 import { getIconByType } from '../../constants/icons';
 
 interface LinkManagerProps {
@@ -171,12 +170,13 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
           })}
         </div>
 
-        <LinkEditor
-          isOpen={isEditorOpen}
-          onClose={() => setIsEditorOpen(false)}
-          onSave={handleSaveLink}
-          link={editingLink}
-        />
+        {isEditorOpen && (
+          <LinkEditor
+            onClose={() => setIsEditorOpen(false)}
+            onSave={handleSaveLink}
+            link={editingLink}
+          />
+        )}
       </>
     );
   }
@@ -223,12 +223,13 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
           </SortableContext>
         </DndContext>
 
-        <LinkEditor
-          isOpen={isEditorOpen}
-          onClose={() => setIsEditorOpen(false)}
-          onSave={handleSaveLink}
-          link={editingLink}
-        />
+        {isEditorOpen && (
+          <LinkEditor
+            onClose={() => setIsEditorOpen(false)}
+            onSave={handleSaveLink}
+            link={editingLink}
+          />
+        )}
       </>
     );
   }
@@ -274,12 +275,13 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
         </SortableContext>
       </DndContext>
 
-      <LinkEditor
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        onSave={handleSaveLink}
-        link={editingLink}
-      />
+      {isEditorOpen && (
+        <LinkEditor
+          onClose={() => setIsEditorOpen(false)}
+          onSave={handleSaveLink}
+          link={editingLink}
+        />
+      )}
     </>
   );
 }
