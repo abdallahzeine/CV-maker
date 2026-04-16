@@ -1,93 +1,28 @@
-import type { CVData, CVItem, CVSection, SkillGroup, SocialLink } from '../types';
-import { moveItem, uid } from '../utils/helpers';
+import { useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { CVData, CVSection, CVItem, SocialLink } from '../types';
+import { EditableText } from '../layouts/EditableText';
+import { ReorderButtons, DeleteButton } from '../layouts/Buttons';
 import { LinkManager } from './links';
+import { SectionRenderer } from '../engine/SectionRenderer';
+import { SingleColumn } from '../templates/SingleColumn';
+import { SidebarLayout } from '../templates/SidebarLayout';
 
-// ============================================================================
-// Basic UI Components
-// ============================================================================
-
-interface EditableTextProps {
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  multiline?: boolean;
-  placeholder?: string;
-}
-
-export function EditableText({
-  value,
-  onChange,
-  className = '',
-  multiline = false,
-  placeholder = 'Click to edit...',
-}: EditableTextProps) {
-  if (multiline) {
-    return (
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => onChange(e.currentTarget.innerHTML)}
-        dangerouslySetInnerHTML={{ __html: value }}
-        data-placeholder={placeholder}
-        className={`min-h-[1em] ${className} empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400`}
-      />
-    );
-  }
-  return (
-    <span
-      contentEditable
-      suppressContentEditableWarning
-      onBlur={(e) => onChange(e.currentTarget.textContent ?? '')}
-      data-placeholder={placeholder}
-      className={`inline-block min-w-[40px] ${className} empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400`}
-    >
-      {value}
-    </span>
-  );
-}
-
-interface ReorderButtonsProps {
-  index: number;
-  total: number;
-  onMove: (delta: -1 | 1) => void;
-}
-
-export function ReorderButtons({ index, total, onMove }: ReorderButtonsProps) {
-  return (
-    <div className="no-print flex flex-col gap-0.5">
-      <button onClick={() => onMove(-1)} disabled={index === 0} title="Move up"
-        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none">▲</button>
-      <button onClick={() => onMove(1)} disabled={index === total - 1} title="Move down"
-        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none">▼</button>
-    </div>
-  );
-}
-
-interface DeleteButtonProps {
-  onClick: () => void;
-  title?: string;
-}
-
-export function DeleteButton({ onClick, title = 'Delete' }: DeleteButtonProps) {
-  return (
-    <button onClick={onClick} title={title}
-      className="no-print w-5 h-5 flex items-center justify-center text-red-300 hover:text-red-600 text-sm leading-none">✕</button>
-  );
-}
-
-interface AddButtonProps {
-  onClick: () => void;
-  label: string;
-}
-
-export function AddButton({ onClick, label }: AddButtonProps) {
-  return (
-    <button onClick={onClick}
-      className="no-print mt-1 text-xs text-blue-500 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-500 rounded px-2 py-0.5 transition-colors">
-      + {label}
-    </button>
-  );
-}
 
 // ============================================================================
 // Header Section
@@ -99,14 +34,36 @@ interface HeaderSectionProps {
 }
 
 export function HeaderSection({ header, onChange }: HeaderSectionProps) {
-  const update = (key: keyof CVData['header'], value: string | SocialLink[]) =>
+  const update = (key: keyof CVData['header'], value: string | SocialLink[] | undefined) =>
     onChange({ ...header, [key]: value });
 
   return (
     <header className="text-center mb-2">
-      <h1 className="text-4xl font-bold text-gray-900 mb-2">
-        <EditableText value={header.name} onChange={(v) => update('name', v)} className="text-4xl font-bold text-gray-900" placeholder="Your Name" />
+      <h1 className="text-4xl font-bold text-gray-900 mb-1">
+        <EditableText
+          value={header.name}
+          onChange={(v) => update('name', v)}
+          className="text-4xl font-bold text-gray-900"
+          placeholder="Your Name"
+        />
       </h1>
+      {header.headline !== undefined ? (
+        <p className="text-sm text-gray-500 mb-2">
+          <EditableText
+            value={header.headline}
+            onChange={(v) => update('headline', v)}
+            placeholder="e.g. Full-Stack Engineer | 4 Years Experience"
+            className="text-sm text-gray-500"
+          />
+        </p>
+      ) : (
+        <button
+          className="no-print text-xs text-gray-400 hover:text-gray-600 mb-2 underline underline-offset-2"
+          onClick={() => update('headline', '')}
+        >
+          + Add headline
+        </button>
+      )}
       <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-gray-600 mb-3">
         <div className="flex items-center gap-1">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -128,10 +85,8 @@ export function HeaderSection({ header, onChange }: HeaderSectionProps) {
           <EditableText value={header.email} onChange={(v) => update('email', v)} placeholder="email@example.com" className="text-blue-600" />
         </div>
       </div>
-      
-      {/* Social Links */}
-      <LinkManager 
-        links={header.socialLinks || []} 
+      <LinkManager
+        links={header.socialLinks || []}
         onChange={(links) => update('socialLinks', links)}
         layout="compact"
       />
@@ -140,258 +95,183 @@ export function HeaderSection({ header, onChange }: HeaderSectionProps) {
 }
 
 // ============================================================================
-// Summary Item
+// CVDocument — assembles the full CV using the selected page template
 // ============================================================================
 
-interface SummaryItemProps {
-  item: CVItem;
-  onChange: (i: CVItem) => void;
+type PanelType = 'layout-settings';
+
+interface CVDocumentProps {
+  cv: CVData;
+  onUpdateHeader: (h: CVData['header']) => void;
+  onUpdateSection: (sIdx: number, updated: CVSection) => void;
+  onMoveSection: (sIdx: number, delta: -1 | 1) => void;
+  onDeleteSection: (sIdx: number) => void;
+  onReorderSections: (oldIndex: number, newIndex: number) => void;
+  onChangeItem: (sIdx: number, iIdx: number, item: CVItem) => void;
+  onMoveItem: (sIdx: number, iIdx: number, delta: -1 | 1) => void;
+  onReorderItems: (sIdx: number, oldIndex: number, newIndex: number) => void;
+  onDeleteItem: (sIdx: number, iIdx: number) => void;
+  onAddItem: (sIdx: number) => void;
+  onOpenPanel: (type: PanelType, sectionId?: string) => void;
 }
 
-export function SummaryItem({ item, onChange }: SummaryItemProps) {
-  return (
-    <p className="text-gray-700 text-sm leading-relaxed">
-      <EditableText multiline value={item.body ?? ''} onChange={(v) => onChange({ ...item, body: v })}
-        placeholder="Write your professional summary..." className="text-gray-700 text-sm leading-relaxed" />
-    </p>
-  );
-}
-
-// ============================================================================
-// Education Item
-// ============================================================================
-
-interface EducationItemProps {
-  item: CVItem;
-  index: number;
-  total: number;
-  onChange: (i: CVItem) => void;
-  onMove: (d: -1 | 1) => void;
-  onDelete: () => void;
-}
-
-export function EducationItem({ item, index, total, onChange, onMove, onDelete }: EducationItemProps) {
-  return (
-    <div className="flex items-start gap-1 mb-1 avoid-break group">
-      <div className="no-print flex items-center gap-1 pt-0.5">
-        <ReorderButtons index={index} total={total} onMove={onMove} />
-        <DeleteButton onClick={onDelete} />
-      </div>
-      <div className="flex-1 flex justify-between items-start">
-        <div>
-          <h3 className="text-base font-semibold">
-            <EditableText value={item.title ?? ''} onChange={(v) => onChange({ ...item, title: v })} placeholder="Degree / Certificate" />
-          </h3>
-          <p className="text-gray-700 text-sm">
-            <EditableText value={item.subtitle ?? ''} onChange={(v) => onChange({ ...item, subtitle: v })} placeholder="Institution · GPA" />
-          </p>
-        </div>
-        <p className="text-gray-600 text-sm mt-1 whitespace-nowrap ml-4">
-          <EditableText value={item.date ?? ''} onChange={(v) => onChange({ ...item, date: v })} placeholder="MM/YYYY" />
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Skills Item
-// ============================================================================
-
-interface SkillsItemProps {
-  item: CVItem;
-  onChange: (i: CVItem) => void;
-}
-
-export function SkillsItem({ item, onChange }: SkillsItemProps) {
-  const groups = item.skillGroups ?? [];
-  const updateGroup = (idx: number, sg: SkillGroup) => {
-    const next = [...groups]; next[idx] = sg;
-    onChange({ ...item, skillGroups: next });
-  };
-  const addGroup = () => onChange({ ...item, skillGroups: [...groups, { id: uid(), label: 'Category', value: 'Skills...' }] });
-  const deleteGroup = (idx: number) => onChange({ ...item, skillGroups: groups.filter((_, i) => i !== idx) });
-  const moveGroup = (idx: number, delta: -1 | 1) => onChange({ ...item, skillGroups: moveItem(groups, idx, delta) });
-
-  return (
-    <div className="text-gray-700 text-sm space-y-0.5">
-      {groups.map((sg, idx) => (
-        <div key={sg.id} className="flex items-center gap-1 group">
-          <div className="no-print flex items-center gap-1">
-            <ReorderButtons index={idx} total={groups.length} onMove={(d) => moveGroup(idx, d)} />
-            <DeleteButton onClick={() => deleteGroup(idx)} />
-          </div>
-          <p>
-            <strong className="font-semibold">
-              <EditableText value={sg.label} onChange={(v) => updateGroup(idx, { ...sg, label: v })} placeholder="Category" />
-              {': '}
-            </strong>
-            <EditableText value={sg.value} onChange={(v) => updateGroup(idx, { ...sg, value: v })} placeholder="skill1, skill2" />
-          </p>
-        </div>
-      ))}
-      <AddButton onClick={addGroup} label="Add skill category" />
-    </div>
-  );
-}
-
-// ============================================================================
-// Certifications / Awards Item
-// ============================================================================
-
-interface TitledDateItemProps {
-  item: CVItem;
-  index: number;
-  total: number;
-  onChange: (i: CVItem) => void;
-  onMove: (d: -1 | 1) => void;
-  onDelete: () => void;
-}
-
-export function TitledDateItem({ item, index, total, onChange, onMove, onDelete }: TitledDateItemProps) {
-  return (
-    <div className="mb-1 avoid-break group flex items-start gap-1">
-      <div className="no-print flex items-center gap-1 pt-0.5">
-        <ReorderButtons index={index} total={total} onMove={onMove} />
-        <DeleteButton onClick={onDelete} />
-      </div>
-      <div className="flex-1">
-        <div className="flex flex-wrap justify-between items-baseline gap-x-2">
-          <h3 className="text-base font-semibold leading-tight">
-            <EditableText value={item.title ?? ''} onChange={(v) => onChange({ ...item, title: v })} placeholder="Title" />
-          </h3>
-          <p className="text-gray-600 text-sm text-right whitespace-nowrap leading-tight">
-            <EditableText value={item.date ?? ''} onChange={(v) => onChange({ ...item, date: v })} placeholder="MM/YYYY" />
-          </p>
-        </div>
-        <p className="text-gray-700 text-sm">
-          <EditableText value={item.subtitle ?? ''} onChange={(v) => onChange({ ...item, subtitle: v })} placeholder="Organization / Issuer" />
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Project Item
-// ============================================================================
-
-interface ProjectItemProps {
-  item: CVItem;
-  index: number;
-  total: number;
-  onChange: (i: CVItem) => void;
-  onMove: (d: -1 | 1) => void;
-  onDelete: () => void;
-}
-
-export function ProjectItem({ item, index, total, onChange, onMove, onDelete }: ProjectItemProps) {
-  const bullets = item.bullets ?? [];
-  const updateBullet = (i: number, v: string) => { const next = [...bullets]; next[i] = v; onChange({ ...item, bullets: next }); };
-  const addBullet = () => onChange({ ...item, bullets: [...bullets, 'New bullet point.'] });
-  const deleteBullet = (i: number) => onChange({ ...item, bullets: bullets.filter((_, j) => j !== i) });
-  const moveBullet = (i: number, delta: -1 | 1) => onChange({ ...item, bullets: moveItem(bullets, i, delta) });
-
-  return (
-    <div className="mb-4 avoid-break group">
-      <div className="flex items-start gap-1">
-        <div className="no-print flex items-center gap-1 pt-0.5">
-          <ReorderButtons index={index} total={total} onMove={onMove} />
-          <DeleteButton onClick={onDelete} title="Delete project" />
-        </div>
-        <h3 className="text-base font-semibold flex-1">
-          <EditableText value={item.title ?? ''} onChange={(v) => onChange({ ...item, title: v })} placeholder="Project Name" />
-        </h3>
-      </div>
-      <ul className="list-none ml-8 text-gray-700 text-sm mt-0.5 space-y-0.5">
-        {bullets.map((b, i) => (
-          <li key={i} className="flex items-start gap-1 group/bullet">
-            <span className="shrink-0 select-none">•</span>
-            <div className="no-print flex items-center gap-0.5 shrink-0">
-              <ReorderButtons index={i} total={bullets.length} onMove={(d) => moveBullet(i, d)} />
-              <DeleteButton onClick={() => deleteBullet(i)} title="Delete bullet" />
-            </div>
-            <EditableText multiline value={b} onChange={(v) => updateBullet(i, v)} placeholder="Bullet point..." className="flex-1" />
-          </li>
-        ))}
-      </ul>
-      <AddButton onClick={addBullet} label="Add bullet" />
-    </div>
-  );
-}
-
-// ============================================================================
-// Volunteering Item
-// ============================================================================
-
-interface VolunteeringItemProps {
-  item: CVItem;
-  index: number;
-  total: number;
-  onChange: (i: CVItem) => void;
-  onMove: (d: -1 | 1) => void;
-  onDelete: () => void;
-}
-
-export function VolunteeringItem({ item, index, total, onChange, onMove, onDelete }: VolunteeringItemProps) {
-  return (
-    <div className="mb-1 avoid-break flex items-start gap-1 group">
-      <div className="no-print flex items-center gap-1 pt-0.5">
-        <ReorderButtons index={index} total={total} onMove={onMove} />
-        <DeleteButton onClick={onDelete} />
-      </div>
-      <div className="flex-1">
-        <div className="flex flex-wrap justify-between items-baseline gap-x-2">
-          <div className="flex items-center gap-1 flex-wrap">
-            <h3 className="text-base font-semibold leading-tight">
-              <EditableText value={item.title ?? ''} onChange={(v) => onChange({ ...item, title: v })} placeholder="Organization" />
-            </h3>
-            <span className="text-gray-400">·</span>
-            <p className="text-gray-700 text-sm">
-              <EditableText value={item.role ?? ''} onChange={(v) => onChange({ ...item, role: v })} placeholder="Role" />
-            </p>
-          </div>
-          <p className="text-gray-600 text-sm text-right whitespace-nowrap leading-tight">
-            <EditableText value={item.date ?? ''} onChange={(v) => onChange({ ...item, date: v })} placeholder="MM/YYYY - MM/YYYY" />
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Section Content Renderer
-// ============================================================================
-
-interface SectionContentProps {
+function SectionShell({
+  section,
+  sIdx,
+  total,
+  onUpdateSection,
+  onMoveSection,
+  onDeleteSection,
+  onChangeItem,
+  onMoveItem,
+  onReorderItems,
+  onDeleteItem,
+  onAddItem,
+  onOpenPanel,
+}: {
   section: CVSection;
-  onChangeItem: (i: number, item: CVItem) => void;
-  onMoveItem: (i: number, d: -1 | 1) => void;
-  onDeleteItem: (i: number) => void;
-  onAddItem: () => void;
+  sIdx: number;
+  total: number;
+  onUpdateSection: (sIdx: number, updated: CVSection) => void;
+  onMoveSection: (sIdx: number, delta: -1 | 1) => void;
+  onDeleteSection: (sIdx: number) => void;
+  onChangeItem: (sIdx: number, iIdx: number, item: CVItem) => void;
+  onMoveItem: (sIdx: number, iIdx: number, delta: -1 | 1) => void;
+  onReorderItems: (oldIndex: number, newIndex: number) => void;
+  onDeleteItem: (sIdx: number, iIdx: number) => void;
+  onAddItem: (sIdx: number) => void;
+  onOpenPanel: (type: PanelType, sectionId?: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <hr className="border-t border-gray-300 mb-2" />
+      <section className="mb-3">
+        <div className="flex items-center gap-1 mb-3">
+          <div className="no-print flex items-center gap-1">
+            <ReorderButtons
+              index={sIdx}
+              total={total}
+              onMove={(d) => onMoveSection(sIdx, d)}
+              dragHandleProps={{ ...listeners }}
+            />
+            <DeleteButton onClick={() => onDeleteSection(sIdx)} title="Delete section" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-800 flex-1">
+            <EditableText
+              value={section.title}
+              onChange={(v) => onUpdateSection(sIdx, { ...section, title: v })}
+              className="text-lg font-bold text-gray-800"
+              placeholder="SECTION TITLE"
+            />
+          </h2>
+          <button
+            onClick={() => onOpenPanel('layout-settings', section.id)}
+            title="Layout settings"
+            className="no-print w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+        <SectionRenderer
+          section={section}
+          onChangeItem={(iIdx, item) => onChangeItem(sIdx, iIdx, item)}
+          onMoveItem={(iIdx, d) => onMoveItem(sIdx, iIdx, d)}
+          onReorderItems={onReorderItems}
+          onDeleteItem={(iIdx) => onDeleteItem(sIdx, iIdx)}
+          onAddItem={() => onAddItem(sIdx)}
+        />
+      </section>
+    </div>
+  );
 }
 
-export function SectionContent({ section, onChangeItem, onMoveItem, onDeleteItem, onAddItem }: SectionContentProps) {
-  const { type, items } = section;
-  if (type === 'summary') return <SummaryItem item={items[0]} onChange={(item) => onChangeItem(0, item)} />;
-  if (type === 'skills') return <SkillsItem item={items[0]} onChange={(item) => onChangeItem(0, item)} />;
+export function CVDocument({
+  cv,
+  onUpdateHeader,
+  onUpdateSection,
+  onMoveSection,
+  onDeleteSection,
+  onReorderSections,
+  onChangeItem,
+  onMoveItem,
+  onReorderItems,
+  onDeleteItem,
+  onAddItem,
+  onOpenPanel,
+}: CVDocumentProps) {
+  const TemplateShell =
+    cv.template.id === 'single-column' ? SingleColumn : SidebarLayout;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleSectionDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = cv.sections.findIndex((s) => s.id === active.id);
+      const newIndex = cv.sections.findIndex((s) => s.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onReorderSections(oldIndex, newIndex);
+      }
+    }
+  }, [cv.sections, onReorderSections]);
+
   return (
-    <div>
-      {items.map((item, idx) => {
-        const props = {
-          key: item.id, item, index: idx, total: items.length,
-          onChange: (i: CVItem) => onChangeItem(idx, i),
-          onMove: (d: -1 | 1) => onMoveItem(idx, d),
-          onDelete: () => onDeleteItem(idx),
-        };
-        if (type === 'education') return <EducationItem {...props} />;
-        if (type === 'certifications' || type === 'awards') return <TitledDateItem {...props} />;
-        if (type === 'projects') return <ProjectItem {...props} />;
-        if (type === 'volunteering') return <VolunteeringItem {...props} />;
-        return null;
-      })}
-      <AddButton onClick={onAddItem} label={`Add ${type === 'certifications' ? 'certification' : type === 'awards' ? 'award' : type === 'volunteering' ? 'entry' : type === 'projects' ? 'project' : 'item'}`} />
-    </div>
+    <TemplateShell>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleSectionDragEnd}
+      >
+        <SortableContext
+          items={cv.sections.map((s) => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <HeaderSection header={cv.header} onChange={onUpdateHeader} />
+          {cv.sections.map((section, sIdx) => (
+            <SectionShell
+              key={section.id}
+              section={section}
+              sIdx={sIdx}
+              total={cv.sections.length}
+              onUpdateSection={onUpdateSection}
+              onMoveSection={onMoveSection}
+              onDeleteSection={onDeleteSection}
+              onChangeItem={onChangeItem}
+              onMoveItem={onMoveItem}
+              onReorderItems={(oldIndex, newIndex) => onReorderItems(sIdx, oldIndex, newIndex)}
+              onDeleteItem={onDeleteItem}
+              onAddItem={onAddItem}
+              onOpenPanel={onOpenPanel}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+    </TemplateShell>
   );
 }

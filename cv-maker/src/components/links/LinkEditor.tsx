@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SocialLink, IconType } from '../../types';
 import { IconSelector } from './IconSelector';
-import { validateUrl, normalizeUrl, extractDomain } from '../../utils/linkValidation';
+import { validateUrl, extractDomain } from '../../utils/linkValidation';
 import { fetchFavicon } from '../../utils/faviconFetcher';
 import { detectIconTypeFromUrl, getIconByType } from '../../constants/icons';
 
 interface LinkEditorProps {
-  isOpen: boolean;
   onClose: () => void;
   onSave: (link: SocialLink) => void;
   link?: SocialLink | null;
@@ -21,35 +20,35 @@ const DEFAULT_LINK: Omit<SocialLink, 'id'> = {
   displayOrder: 0,
 };
 
-export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
-  const [formData, setFormData] = useState<Omit<SocialLink, 'id'>>(DEFAULT_LINK);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isCheckingUrl, setIsCheckingUrl] = useState(false);
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+export function LinkEditor({ onClose, onSave, link }: LinkEditorProps) {
   const isEditing = !!link;
 
-  useEffect(() => {
-    if (isOpen) {
-      if (link) {
-        setFormData({
+  const [formData, setFormData] = useState<Omit<SocialLink, 'id'>>(() =>
+    link
+      ? {
           url: link.url,
           label: link.label,
           iconType: link.iconType,
           customIconUrl: link.customIconUrl,
           color: link.color,
           displayOrder: link.displayOrder,
-        });
-        // Try to fetch favicon for existing link
-        fetchFavicon(link.url).then((result) => {
-          if (result.url) setFaviconUrl(result.url);
-        });
-      } else {
-        setFormData(DEFAULT_LINK);
-        setFaviconUrl(null);
-      }
-      setValidationError(null);
-    }
-  }, [isOpen, link]);
+        }
+      : { ...DEFAULT_LINK }
+  );
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isCheckingUrl, setIsCheckingUrl] = useState(() => !!link?.url);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const fetchCounterRef = useRef(0);
+
+  useEffect(() => {
+    if (!link?.url) return;
+    let cancelled = false;
+    fetchFavicon(link.url).then((result) => {
+      if (!cancelled && result.url) setFaviconUrl(result.url);
+      if (!cancelled) setIsCheckingUrl(false);
+    });
+    return () => { cancelled = true; };
+  }, [link]);
 
   const handleUrlChange = useCallback(async (url: string) => {
     setFormData((prev) => ({ ...prev, url }));
@@ -60,7 +59,6 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
       return;
     }
 
-    // Real-time validation
     const validation = validateUrl(url);
     
     if (!validation.isValid) {
@@ -70,7 +68,6 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
 
     setValidationError(null);
     
-    // Auto-detect icon type from URL
     const detectedIcon = detectIconTypeFromUrl(validation.normalizedUrl);
     setFormData((prev) => ({ 
       ...prev, 
@@ -80,9 +77,10 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
         : prev.iconType 
     }));
 
-    // Fetch favicon
     setIsCheckingUrl(true);
+    const token = ++fetchCounterRef.current;
     const faviconResult = await fetchFavicon(validation.normalizedUrl);
+    if (token !== fetchCounterRef.current) return; // stale — newer call in flight
     if (faviconResult.url) {
       setFaviconUrl(faviconResult.url);
     }
@@ -91,7 +89,6 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
 
   const handleUrlBlur = () => {
     if (formData.url && !formData.label) {
-      // Auto-generate label from domain if empty
       const domain = extractDomain(formData.url);
       setFormData((prev) => ({ ...prev, label: domain }));
     }
@@ -123,8 +120,6 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
       customIconUrl: customUrl || prev.customIconUrl,
     }));
   };
-
-  if (!isOpen) return null;
 
   return (
     <div 
@@ -260,12 +255,17 @@ export function LinkEditor({ isOpen, onClose, onSave, link }: LinkEditorProps) {
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, color: undefined }))}
-                    className="text-xs text-gray-500 hover:text-gray-700 underline"
+                    className="text-xs text-gray-500 hover:text-gray-700 underline whitespace-nowrap"
                   >
-                    Reset
+                    Professional
                   </button>
                 )}
               </div>
+              {formData.color && (
+                <p className="mt-1.5 text-xs text-amber-600">
+                  Custom colors may not print well. Remove for a professional look.
+                </p>
+              )}
             </div>
 
             {/* Preview */}

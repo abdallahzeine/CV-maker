@@ -1,6 +1,48 @@
-import type { CVData } from '../types';
+import type { CVData, SectionLayout } from '../types';
+
+// Classic layout defaults per section type (matches current visual output)
+const classicWorkExp: SectionLayout = {
+  presetId: 'classic',
+  dateSlot: 'right-inline',
+  iconStyle: 'bullet',
+  separator: 'none',
+  density: 'compact',
+  columns: 1,
+  showTitleRule: false,
+};
+
+const classicDateRight: SectionLayout = {
+  presetId: 'classic',
+  dateSlot: 'right-inline',
+  iconStyle: 'none',
+  separator: 'none',
+  density: 'compact',
+  columns: 1,
+  showTitleRule: false,
+};
+
+const classicNoDate: SectionLayout = {
+  presetId: 'classic',
+  dateSlot: 'hidden',
+  iconStyle: 'none',
+  separator: 'none',
+  density: 'compact',
+  columns: 1,
+  showTitleRule: false,
+};
+
+const classicProjects: SectionLayout = {
+  presetId: 'classic',
+  dateSlot: 'hidden',
+  iconStyle: 'bullet',
+  separator: 'none',
+  density: 'relaxed',
+  columns: 1,
+  showTitleRule: false,
+};
 
 export const initialCVData: CVData = {
+  template: { id: 'single-column', columns: 1 },
   header: {
     name: 'Abdallah Zeine Elabidine',
     location: 'Jeddah, Saudi Arabia',
@@ -33,9 +75,29 @@ export const initialCVData: CVData = {
   },
   sections: [
     {
+      id: 'work-exp',
+      type: 'work-experience',
+      title: 'WORK EXPERIENCE',
+      layout: classicWorkExp,
+      items: [
+        {
+          id: 'we-1',
+          title: 'AI Engineer Intern',
+          subtitle: 'Tech Company',
+          location: 'Jeddah, Saudi Arabia',
+          date: '06/2024 - 09/2024',
+          bullets: [
+            'Developed AI-powered features using LangChain and OpenAI APIs.',
+            'Built and deployed REST APIs with FastAPI, reducing response time by 30%.',
+          ],
+        },
+      ],
+    },
+    {
       id: 'summary',
       type: 'summary',
       title: 'PROFESSIONAL SUMMARY',
+      layout: classicNoDate,
       items: [
         {
           id: 'summary-1',
@@ -47,6 +109,7 @@ export const initialCVData: CVData = {
       id: 'education',
       type: 'education',
       title: 'EDUCATION',
+      layout: classicDateRight,
       items: [
         {
           id: 'edu-1',
@@ -60,6 +123,7 @@ export const initialCVData: CVData = {
       id: 'skills',
       type: 'skills',
       title: 'SKILLS',
+      layout: classicNoDate,
       items: [
         {
           id: 'skills-1',
@@ -76,6 +140,7 @@ export const initialCVData: CVData = {
       id: 'certifications',
       type: 'certifications',
       title: 'CERTIFICATIONS',
+      layout: classicDateRight,
       items: [
         {
           id: 'cert-1',
@@ -95,6 +160,7 @@ export const initialCVData: CVData = {
       id: 'projects',
       type: 'projects',
       title: 'PROJECTS',
+      layout: classicProjects,
       items: [
         {
           id: 'proj-1',
@@ -139,6 +205,7 @@ export const initialCVData: CVData = {
       id: 'awards',
       type: 'awards',
       title: 'AWARDS & SCHOLARSHIPS',
+      layout: classicDateRight,
       items: [
         {
           id: 'award-1',
@@ -158,6 +225,7 @@ export const initialCVData: CVData = {
       id: 'volunteering',
       type: 'volunteering',
       title: 'VOLUNTEERING & LEADERSHIP',
+      layout: classicDateRight,
       items: [
         {
           id: 'vol-1',
