@@ -12,13 +12,13 @@ export function ReorderButtons({ index, total, onMove, dragHandleProps }: Reorde
         onClick={() => onMove(-1)}
         disabled={index === 0}
         title="Move up"
-        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none"
+        className="w-8 h-8 md:w-5 md:h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none"
       >▲</button>
       {dragHandleProps && (
         <div
           {...dragHandleProps}
           title="Drag to reorder"
-          className="w-5 h-4 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 rounded transition-colors"
+          className="w-8 h-8 md:w-5 md:h-4 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 rounded transition-colors"
         >
           <svg className="w-3 h-3" viewBox="0 0 6 12" fill="currentColor">
             <circle cx="1.5" cy="2" r="1" />
@@ -34,7 +34,7 @@ export function ReorderButtons({ index, total, onMove, dragHandleProps }: Reorde
         onClick={() => onMove(1)}
         disabled={index === total - 1}
         title="Move down"
-        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none"
+        className="w-8 h-8 md:w-5 md:h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs leading-none"
       >▼</button>
     </div>
   );
@@ -50,7 +50,7 @@ export function DeleteButton({ onClick, title = 'Delete' }: DeleteButtonProps) {
     <button
       onClick={onClick}
       title={title}
-      className="no-print w-5 h-5 flex items-center justify-center text-red-300 hover:text-red-600 text-sm leading-none"
+      className="no-print w-8 h-8 md:w-5 md:h-5 flex items-center justify-center text-red-300 hover:text-red-600 text-sm leading-none"
     >✕</button>
   );
 }

@@ -5,6 +5,7 @@ import { SidePanel } from './components/SidePanel';
 import { SectionLayoutContent } from './components/SectionLayoutPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadSidePanelWidth, saveSidePanelWidth } from './utils/sidePanel';
+import { useMediaQuery } from './utils/useMediaQuery';
 import { createBlankCVData } from './utils/snapshots';
 import { sectionRegistry } from './sections/registry';
 import { useCVSelector, useDispatch, useHistory } from './store';
@@ -142,11 +143,12 @@ export default function App() {
 
   const panelOpen = panel !== null;
   const effectiveWidth = panelOpen ? panelWidth : 0;
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   return (
     <>
     {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
-    <div className="transition-[margin-right] duration-300 ease-in-out" style={{ marginRight: effectiveWidth }}>
+    <div className="transition-[margin-right] duration-300 ease-in-out" style={{ marginRight: isMobile ? 0 : effectiveWidth }}>
 <Toolbar
         onReset={handleReset}
         onPrint={handlePrint}
@@ -206,7 +208,7 @@ export default function App() {
       href="https://abdallahzeine.vercel.app"
       target="_blank"
       rel="noopener noreferrer"
-      className="no-print fixed bottom-4 right-4 z-40 rounded-full border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-gray-900"
+      className="no-print hidden md:block fixed bottom-4 right-4 z-40 rounded-full border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-gray-900"
       aria-label="Made by Abdallah Zeine Elabidine"
     >
       Made by Abdallah Zeine Elabidine

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { clampSidePanelWidth } from '../utils/sidePanel';
+import { useMediaQuery } from '../utils/useMediaQuery';
 
 interface SidePanelProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface SidePanelProps {
 
 export function SidePanel({ open, onClose, width, onWidthChange, title, subtitle, children }: SidePanelProps) {
   const resizeStart = useRef<{ x: number; w: number } | null>(null);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   useEffect(() => {
     if (!open) return;
@@ -46,17 +48,25 @@ export function SidePanel({ open, onClose, width, onWidthChange, title, subtitle
   }, [width, onWidthChange]);
 
   return (
-    <div
-      className={`no-print fixed top-0 right-0 bottom-0 z-40 flex transition-transform duration-300 ease-in-out ${
-        open ? 'translate-x-0' : 'translate-x-full'
-      }`}
-      style={{ width: `${width}px` }}
-    >
-      {/* Resize handle */}
+    <>
+      {open && isMobile && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
       <div
-        onMouseDown={handleResizeStart}
-        className="w-1 shrink-0 cursor-col-resize group relative"
+        className={`no-print fixed top-0 right-0 bottom-0 z-40 flex transition-transform duration-300 ease-in-out ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{ width: isMobile ? '100%' : `${width}px` }}
       >
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="hidden md:block w-1 shrink-0 cursor-col-resize group relative"
+        >
         <div className="absolute inset-y-0 -left-1 right-0 group-hover:bg-violet-200/60 group-active:bg-violet-300/60 transition-colors" />
       </div>
 
@@ -82,5 +92,6 @@ export function SidePanel({ open, onClose, width, onWidthChange, title, subtitle
         </div>
       </div>
     </div>
+    </>
   );
 }

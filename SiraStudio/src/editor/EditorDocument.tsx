@@ -49,12 +49,12 @@ function HeaderSection({
   }, [dispatch, links.length]);
 
   return (
-    <header className="text-center mb-2">
-      <div className="text-4xl font-bold text-gray-900 mb-1" role="heading" aria-level={1}>
+    <header className="text-center mb-1 md:mb-2">
+      <div className="text-base md:text-3xl lg:text-4xl font-bold text-gray-900 mb-0.5 md:mb-1" role="heading" aria-level={1}>
         <CVTextEditor
           value={header.name}
           path="header.name"
-          className="text-4xl font-bold text-gray-900"
+          className="text-base md:text-3xl lg:text-4xl font-bold text-gray-900"
           placeholder="Your Name"
         />
       </div>
@@ -82,7 +82,7 @@ function HeaderSection({
           + Add headline
         </button>
       )}
-      <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-gray-600 mb-3">
+      <div className="flex flex-wrap justify-center items-center gap-1 md:gap-4 text-[11px] md:text-sm text-gray-600 mb-1.5 md:mb-3">
         <div className="flex items-center gap-1">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />

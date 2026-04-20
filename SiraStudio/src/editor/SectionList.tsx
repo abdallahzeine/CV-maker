@@ -166,9 +166,9 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} className={animClass} id={`section-${section.id}`}>
-      <hr className="border-t border-gray-300 mb-2" />
-      <section className="mb-3">
-        <div className="flex items-center gap-1 mb-3">
+      <hr className="border-t border-gray-300 mb-1 md:mb-2" />
+      <section className="mb-2 md:mb-3">
+        <div className="flex items-center gap-1 mb-2 md:mb-3">
           <div className="no-print flex items-center gap-1">
             <ReorderButtons
               index={sectionIndex}
@@ -189,18 +189,18 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
               title="Delete section"
             />
           </div>
-          <div className="text-lg font-bold text-gray-800 flex-1" role="heading" aria-level={2}>
+          <div className="text-sm md:text-lg font-bold text-gray-800 flex-1" role="heading" aria-level={2}>
             <CVTextEditor
               value={section.title}
               path={`sections[${sectionIndex}].title`}
-              className="text-lg font-bold text-gray-800"
+              className="text-sm md:text-lg font-bold text-gray-800"
               placeholder="SECTION TITLE"
             />
           </div>
           <button
             onClick={() => onOpenPanel('layout-settings', section.id)}
             title="Layout settings"
-            className="no-print w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="no-print w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

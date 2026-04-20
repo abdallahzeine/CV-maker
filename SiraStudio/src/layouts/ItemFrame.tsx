@@ -15,9 +15,9 @@ interface ItemFrameProps {
 }
 
 const densityClass: Record<Density, string> = {
-  compact: 'mb-1',
-  normal: 'mb-2',
-  relaxed: 'mb-4',
+  compact: 'mb-0.5 md:mb-1',
+  normal: 'mb-1 md:mb-2',
+  relaxed: 'mb-2 md:mb-4',
 };
 
 export function ItemFrame({ itemId, density, index, total, onMove, onDelete, children, hideControls = false }: ItemFrameProps) {
@@ -49,7 +49,7 @@ export function ItemFrame({ itemId, density, index, total, onMove, onDelete, chi
     >
       <div className="flex items-start gap-1">
         {!hideControls && (
-          <div className="no-print flex items-center gap-1 pt-0.5 shrink-0">
+          <div className="no-print flex items-center gap-0.5 md:gap-1 pt-0.5 shrink-0">
             <ReorderButtons
               index={index}
               total={total}
