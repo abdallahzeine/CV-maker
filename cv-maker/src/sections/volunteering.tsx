@@ -2,7 +2,31 @@ import type { SectionDef } from './registry';
 import { classicLayouts, professionalLayouts } from '../presets';
 import { HeadingBlock } from '../layouts/HeadingBlock';
 import { ItemFrame } from '../layouts/ItemFrame';
+import { HeadingBlockPrint } from '../print/layouts/HeadingBlockPrint';
+import { ItemFramePrint } from '../print/layouts/ItemFramePrint';
 import { uid } from '../utils/helpers';
+
+const renderVolunteeringEditor: NonNullable<SectionDef['renderItemEditor']> = ({
+  itemPath,
+  item,
+  layout,
+  index,
+  total,
+  onMove,
+  onDelete,
+}) => (
+  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+    <HeadingBlock
+      title={item.title ?? ''}
+      titlePath={`${itemPath}.title`}
+      role={item.role ?? ''}
+      rolePath={`${itemPath}.role`}
+      date={item.date ?? ''}
+      datePath={`${itemPath}.date`}
+      dateSlot={layout.dateSlot}
+    />
+  </ItemFrame>
+);
 
 export const volunteeringDef: SectionDef = {
   type: 'volunteering',
@@ -23,17 +47,16 @@ export const volunteeringDef: SectionDef = {
   addItemLabel: 'Add entry',
   availablePresetIds: ['classic'],
   newItem: () => ({ id: uid(), title: 'Organization', role: 'Role', date: 'MM/YYYY - Present' }),
-  renderItem: ({ item, layout, index, total, onChange, onMove, onDelete }) => (
-    <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
-      <HeadingBlock
+  renderItemEditor: renderVolunteeringEditor,
+  renderItem: renderVolunteeringEditor,
+  renderItemPrint: ({ item, layout }) => (
+    <ItemFramePrint density={layout.density}>
+      <HeadingBlockPrint
         title={item.title ?? ''}
-        onChangeTitle={(v) => onChange({ ...item, title: v })}
-        role={item.role ?? ''}
-        onChangeRole={(v) => onChange({ ...item, role: v })}
-        date={item.date ?? ''}
-        onChangeDate={(v) => onChange({ ...item, date: v })}
+        role={item.role}
+        date={item.date}
         dateSlot={layout.dateSlot}
       />
-    </ItemFrame>
+    </ItemFramePrint>
   ),
 };

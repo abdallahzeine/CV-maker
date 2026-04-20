@@ -1,0 +1,47 @@
+import type { CVData } from '../types';
+import type { HistoryAPI } from './history';
+
+export interface CVDocument {
+  schemaVersion: 1;
+  revision: number;
+  data: CVData;
+  meta: { lastSavedAt: number | null };
+}
+
+export type PatchOp = 'set' | 'replace' | 'merge' | 'insert' | 'delete' | 'move';
+
+export interface Patch {
+  op: PatchOp;
+  path: string;
+  value?: unknown;
+  from?: string;
+}
+
+export interface DispatchResult {
+  success: boolean;
+  revision?: number;
+  appliedPatches?: Patch[];
+  inversePatches?: Patch[];
+  error?: PatchError;
+}
+
+export interface DispatchOptions {
+  txId?: string;
+  origin: 'editor' | 'external' | 'import' | 'undo' | 'redo' | 'agent';
+  label?: string;
+}
+
+export interface StoreAPI {
+  getSnapshot(): CVDocument;
+  subscribe(cb: (doc: CVDocument) => void): () => void;
+  dispatch(patch: Patch | Patch[], opts?: DispatchOptions): DispatchResult;
+  history: HistoryAPI;
+}
+
+export type CVSelector<T> = (doc: CVDocument) => T;
+
+export interface PatchError {
+  code: string;
+  message: string;
+  path?: string;
+}

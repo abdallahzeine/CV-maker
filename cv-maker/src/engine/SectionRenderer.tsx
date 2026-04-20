@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, Fragment } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -15,26 +15,21 @@ import {
 } from '@dnd-kit/sortable';
 import type { CVSection, CVItem } from '../types';
 import { sectionRegistry } from '../sections/registry';
+import { useDispatch } from '../store';
 import { AddButton } from '../layouts/Buttons';
 
 interface SectionRendererProps {
+  sectionIndex: number;
   section: CVSection;
-  onChangeItem: (i: number, item: CVItem) => void;
-  onMoveItem: (i: number, d: -1 | 1) => void;
-  onReorderItems: (oldIndex: number, newIndex: number) => void;
-  onDeleteItem: (i: number) => void;
-  onAddItem: () => void;
 }
 
 export function SectionRenderer({
+  sectionIndex,
   section,
-  onChangeItem,
-  onMoveItem,
-  onReorderItems,
-  onDeleteItem,
-  onAddItem,
 }: SectionRendererProps) {
+  const dispatch = useDispatch();
   const def = sectionRegistry[section.type] ?? sectionRegistry.custom;
+  const renderEditor = def.renderItemEditor ?? def.renderItem;
   const { items, layout, schema } = section;
 
   const sensors = useSensors(
@@ -52,10 +47,45 @@ export function SectionRenderer({
       const oldIndex = items.findIndex((item) => item.id === active.id);
       const newIndex = items.findIndex((item) => item.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        onReorderItems(oldIndex, newIndex);
+        dispatch({
+          op: 'move',
+          from: `sections[${sectionIndex}].items[${oldIndex}]`,
+          path: `sections[${sectionIndex}].items[${newIndex}]`,
+        });
       }
     }
-  }, [items, onReorderItems]);
+  }, [dispatch, items, sectionIndex]);
+
+  const onChangeItem = useCallback((index: number, item: CVItem) => {
+    dispatch({ op: 'replace', path: `sections[${sectionIndex}].items[${index}]`, value: item });
+  }, [dispatch, sectionIndex]);
+
+  const onMoveItem = useCallback((index: number, delta: -1 | 1) => {
+    const target = index + delta;
+    if (target < 0 || target >= items.length) return;
+    dispatch({
+      op: 'move',
+      from: `sections[${sectionIndex}].items[${index}]`,
+      path: `sections[${sectionIndex}].items[${target}]`,
+    });
+  }, [dispatch, items.length, sectionIndex]);
+
+  const onDeleteItem = useCallback((index: number) => {
+    if (index < 0 || index >= items.length) return;
+    dispatch({ op: 'delete', path: `sections[${sectionIndex}].items[${index}]` });
+  }, [dispatch, items.length, sectionIndex]);
+
+  const onAddItem = useCallback(() => {
+    dispatch({
+      op: 'insert',
+      path: `sections[${sectionIndex}].items[-1]`,
+      value: def.newItem(),
+    });
+  }, [def, dispatch, sectionIndex]);
+
+  if (!renderEditor) {
+    return null;
+  }
 
   return (
     <DndContext
@@ -67,18 +97,23 @@ export function SectionRenderer({
         items={items.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
-        {items.map((item, idx) =>
-          def.renderItem({
-            item,
-            layout,
-            index: idx,
-            total: items.length,
-            onChange: (i: CVItem) => onChangeItem(idx, i),
-            onMove: (d: -1 | 1) => onMoveItem(idx, d),
-            onDelete: () => onDeleteItem(idx),
-            schema,
-          })
-        )}
+        {items.map((item, idx) => (
+          <Fragment key={item.id}>
+            {renderEditor({
+              item,
+              section,
+              layout,
+              sectionIndex,
+              index: idx,
+              total: items.length,
+              itemPath: `sections[${sectionIndex}].items[${idx}]`,
+              onChange: (i: CVItem) => onChangeItem(idx, i),
+              onMove: (d: -1 | 1) => onMoveItem(idx, d),
+              onDelete: () => onDeleteItem(idx),
+              schema,
+            })}
+          </Fragment>
+        ))}
       </SortableContext>
       {!def.singleItem && (
         <AddButton onClick={onAddItem} label={def.addItemLabel} />

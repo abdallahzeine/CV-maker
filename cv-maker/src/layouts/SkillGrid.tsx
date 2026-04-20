@@ -12,32 +12,32 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  arrayMove,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { CVItem, SkillGroup } from '../types';
-import { EditableText } from './EditableText';
+import { CVTextEditor } from '../editor/CVTextEditor';
+import { useDispatch } from '../store';
 import { ReorderButtons, DeleteButton, AddButton } from './Buttons';
 import { uid } from '../utils/helpers';
 
 interface SkillGridProps {
+  path: string;
   item: CVItem;
-  onChange: (i: CVItem) => void;
 }
 
 function SortableSkillGroup({
+  path,
   group,
   index,
   total,
-  onUpdate,
   onMove,
   onDelete,
 }: {
+  path: string;
   group: SkillGroup;
   index: number;
   total: number;
-  onUpdate: (sg: SkillGroup) => void;
   onMove: (d: -1 | 1) => void;
   onDelete: () => void;
 }) {
@@ -57,7 +57,7 @@ function SortableSkillGroup({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} className="flex items-center gap-1 group">
+    <div ref={setNodeRef} style={style} {...attributes} className="flex items-center gap-1 group animate-item-in">
       <div className="no-print flex items-center gap-1">
         <ReorderButtons
           index={index}
@@ -67,18 +67,29 @@ function SortableSkillGroup({
         />
         <DeleteButton onClick={onDelete} />
       </div>
-      <p>
-        <strong className="font-semibold">
-          <EditableText value={group.label} onChange={(v) => onUpdate({ ...group, label: v })} placeholder="Category" />
-          {': '}
-        </strong>
-        <EditableText value={group.value} onChange={(v) => onUpdate({ ...group, value: v })} placeholder="skill1, skill2" />
-      </p>
+      <div className="flex items-baseline gap-1 flex-wrap">
+        <div className="font-semibold">
+          <CVTextEditor
+            value={group.label}
+            path={`${path}.label`}
+            placeholder="Category"
+          />
+        </div>
+        <span>:</span>
+        <div>
+          <CVTextEditor
+            value={group.value}
+            path={`${path}.value`}
+            placeholder="skill1, skill2"
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
-export function SkillGrid({ item, onChange }: SkillGridProps) {
+export function SkillGrid({ path, item }: SkillGridProps) {
+  const dispatch = useDispatch();
   const groups = useMemo(() => item.skillGroups ?? [], [item.skillGroups]);
 
   const sensors = useSensors(
@@ -96,26 +107,26 @@ export function SkillGrid({ item, onChange }: SkillGridProps) {
       const oldIndex = groups.findIndex((g) => g.id === active.id);
       const newIndex = groups.findIndex((g) => g.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        onChange({ ...item, skillGroups: arrayMove(groups, oldIndex, newIndex) });
+        dispatch({
+          op: 'move',
+          from: `${path}[${oldIndex}]`,
+          path: `${path}[${newIndex}]`,
+        });
       }
     }
-  }, [groups, item, onChange]);
+  }, [dispatch, groups, path]);
 
-  const updateGroup = (idx: number, sg: SkillGroup) => {
-    const next = [...groups];
-    next[idx] = sg;
-    onChange({ ...item, skillGroups: next });
-  };
   const addGroup = () =>
-    onChange({ ...item, skillGroups: [...groups, { id: uid(), label: 'Category', value: 'Skills...' }] });
-  const deleteGroup = (idx: number) =>
-    onChange({ ...item, skillGroups: groups.filter((_, i) => i !== idx) });
+    dispatch({
+      op: 'insert',
+      path: `${path}[-1]`,
+      value: { id: uid(), label: 'Category', value: 'Skills...' },
+    });
+  const deleteGroup = (idx: number) => dispatch({ op: 'delete', path: `${path}[${idx}]` });
   const moveGroup = (idx: number, delta: -1 | 1) => {
-    const next = [...groups];
     const target = idx + delta;
-    if (target < 0 || target >= next.length) return;
-    [next[idx], next[target]] = [next[target], next[idx]];
-    onChange({ ...item, skillGroups: next });
+    if (target < 0 || target >= groups.length) return;
+    dispatch({ op: 'move', from: `${path}[${idx}]`, path: `${path}[${target}]` });
   };
 
   return (
@@ -132,10 +143,10 @@ export function SkillGrid({ item, onChange }: SkillGridProps) {
           {groups.map((sg, idx) => (
             <SortableSkillGroup
               key={sg.id}
+              path={`${path}[${idx}]`}
               group={sg}
               index={idx}
               total={groups.length}
-              onUpdate={(updated) => updateGroup(idx, updated)}
               onMove={(d) => moveGroup(idx, d)}
               onDelete={() => deleteGroup(idx)}
             />

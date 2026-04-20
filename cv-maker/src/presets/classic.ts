@@ -9,7 +9,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   education: {
     presetId: 'classic',
@@ -18,7 +17,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   skills: {
     presetId: 'classic',
@@ -27,7 +25,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   certifications: {
     presetId: 'classic',
@@ -36,7 +33,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   projects: {
     presetId: 'classic',
@@ -45,7 +41,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'relaxed',
     columns: 1,
-    showTitleRule: false,
   },
   awards: {
     presetId: 'classic',
@@ -54,7 +49,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   volunteering: {
     presetId: 'classic',
@@ -63,7 +57,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   'work-experience': {
     presetId: 'classic',
@@ -72,7 +65,6 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   custom: {
     presetId: 'classic',
@@ -81,6 +73,12 @@ export const classicLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
+  },
+  spacer: {
+    dateSlot: 'hidden',
+    iconStyle: 'none',
+    separator: 'none',
+    density: 'normal',
+    columns: 1,
   },
 };

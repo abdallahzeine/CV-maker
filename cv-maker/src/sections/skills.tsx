@@ -1,7 +1,13 @@
 import type { SectionDef } from './registry';
 import { classicLayouts, professionalLayouts } from '../presets';
 import { SkillGrid } from '../layouts/SkillGrid';
+import { ItemFramePrint } from '../print/layouts/ItemFramePrint';
+import { SkillGridPrint } from '../print/layouts/SkillGridPrint';
 import { uid } from '../utils/helpers';
+
+const renderSkillsEditor: NonNullable<SectionDef['renderItemEditor']> = ({ itemPath, item }) => {
+  return <SkillGrid path={`${itemPath}.skillGroups`} item={item} />;
+};
 
 export const skillsDef: SectionDef = {
   type: 'skills',
@@ -22,7 +28,11 @@ export const skillsDef: SectionDef = {
   addItemLabel: 'Add skills block',
   availablePresetIds: ['classic'],
   newItem: () => ({ id: uid(), skillGroups: [] }),
-  renderItem: ({ item, onChange }) => (
-    <SkillGrid item={item} onChange={onChange} />
+  renderItemEditor: renderSkillsEditor,
+  renderItem: renderSkillsEditor,
+  renderItemPrint: ({ item, layout }) => (
+    <ItemFramePrint density={layout.density}>
+      <SkillGridPrint groups={item.skillGroups ?? []} />
+    </ItemFramePrint>
   ),
 };

@@ -3,9 +3,51 @@ import { classicLayouts, professionalLayouts } from '../presets';
 import { BulletList } from '../layouts/BulletList';
 import { HeadingBlock } from '../layouts/HeadingBlock';
 import { ItemFrame } from '../layouts/ItemFrame';
-import { StructuredDatePicker } from '../components/StructuredDatePicker';
+import { BulletListPrint } from '../print/layouts/BulletListPrint';
+import { HeadingBlockPrint } from '../print/layouts/HeadingBlockPrint';
+import { ItemFramePrint } from '../print/layouts/ItemFramePrint';
 import { uid } from '../utils/helpers';
 import { dateRangeString } from '../utils/dateUtils';
+
+const renderWorkExperienceEditor: NonNullable<SectionDef['renderItemEditor']> = ({
+  itemPath,
+  item,
+  layout,
+  index,
+  total,
+  onMove,
+  onDelete,
+}) => {
+  const fmt = 'MM/YYYY';
+  const legacyDate =
+    item.dateStart || item.dateEnd
+      ? dateRangeString(item.dateStart, item.dateEnd, fmt)
+      : (item.date ?? '');
+  const displayDate = item.date ?? legacyDate;
+
+  return (
+    <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+      <HeadingBlock
+        title={item.title ?? ''}
+        titlePath={`${itemPath}.title`}
+        subtitle={item.subtitle ?? ''}
+        subtitlePath={`${itemPath}.subtitle`}
+        location={item.location ?? ''}
+        locationPath={`${itemPath}.location`}
+        date={layout.dateSlot !== 'hidden' ? displayDate : undefined}
+        datePath={`${itemPath}.date`}
+        dateSlot={layout.dateSlot}
+        titleClassName="text-base font-semibold"
+        subtitleClassName="text-gray-700 text-sm"
+      />
+      <BulletList
+        bullets={item.bullets ?? []}
+        bulletsPath={`${itemPath}.bullets`}
+        iconStyle={layout.iconStyle}
+      />
+    </ItemFrame>
+  );
+};
 
 export const workExperienceDef: SectionDef = {
   type: 'work-experience',
@@ -30,50 +72,31 @@ export const workExperienceDef: SectionDef = {
     title: '',
     subtitle: '',
     location: '',
-    dateEnd: 'present' as const,
+    date: '',
     bullets: [''],
   }),
-  renderItem: ({ item, layout, index, total, onChange, onMove, onDelete }) => {
-    const fmt = 'MM/YYYY';
-    const displayDate =
+  renderItemEditor: renderWorkExperienceEditor,
+  renderItem: renderWorkExperienceEditor,
+  renderItemPrint: ({ item, layout, dateFormat }) => {
+    const legacyDate =
       item.dateStart || item.dateEnd
-        ? dateRangeString(item.dateStart, item.dateEnd, fmt)
+        ? dateRangeString(item.dateStart, item.dateEnd, dateFormat)
         : (item.date ?? '');
+    const displayDate = item.date ?? legacyDate;
 
     return (
-      <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
-        <HeadingBlock
+      <ItemFramePrint density={layout.density}>
+        <HeadingBlockPrint
           title={item.title ?? ''}
-          onChangeTitle={(v) => onChange({ ...item, title: v })}
-          subtitle={item.subtitle ?? ''}
-          onChangeSubtitle={(v) => onChange({ ...item, subtitle: v })}
-          location={item.location ?? ''}
-          onChangeLocation={(v) => onChange({ ...item, location: v })}
+          subtitle={item.subtitle}
+          location={item.location}
           date={layout.dateSlot !== 'hidden' ? displayDate : undefined}
-          onChangeDate={undefined}
-dateSlot={layout.dateSlot}
-           titleClassName="text-base font-semibold"
+          dateSlot={layout.dateSlot}
+          titleClassName="text-base font-semibold"
           subtitleClassName="text-gray-700 text-sm"
         />
-        <div className="no-print flex gap-2 mt-1 flex-wrap">
-          <StructuredDatePicker
-            label="From"
-            value={item.dateStart}
-            onChange={(v) => onChange({ ...item, dateStart: v as typeof item.dateStart })}
-          />
-          <StructuredDatePicker
-            label="To"
-            value={item.dateEnd}
-            allowPresent
-            onChange={(v) => onChange({ ...item, dateEnd: v as typeof item.dateEnd })}
-          />
-        </div>
-        <BulletList
-          bullets={item.bullets ?? []}
-          onChange={(bullets) => onChange({ ...item, bullets })}
-          iconStyle={layout.iconStyle}
-        />
-      </ItemFrame>
+        <BulletListPrint bullets={item.bullets ?? []} iconStyle={layout.iconStyle} />
+      </ItemFramePrint>
     );
   },
 };

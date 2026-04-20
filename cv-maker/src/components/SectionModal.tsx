@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { SectionType, CVSection, CustomFieldDef, CustomFieldKind, SectionLayout } from '../types';
 import { sectionRegistry } from '../sections/registry';
 import { sectionCategories } from '../sections/categories';
+import { spacerDef } from '../sections/spacer';
 import { classicLayouts, professionalLayouts } from '../presets';
 import { uid } from '../utils/helpers';
 import {
@@ -78,6 +79,7 @@ const FIELD_KINDS: { kind: CustomFieldKind; label: string }[] = [
 
 export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
   const [step, setStep] = useState<WizardStep>(1);
+  const [stepDirection, setStepDirection] = useState<'forward' | 'back'>('forward');
   const [selectedType, setSelectedType] = useState<SectionType | null>(null);
   const [draftLayout, setDraftLayout] = useState<SectionLayout | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -92,11 +94,24 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
   const handleSelectType = (type: SectionType) => {
     setSelectedType(type);
     setDraftLayout({ ...sectionRegistry[type].defaultLayout });
+    setStepDirection('forward');
     if (type === 'custom') {
       setStep(3);
     } else {
       setStep(2);
     }
+  };
+
+  const handleAddSpacer = () => {
+    const newSection: CVSection = {
+      id: uid(),
+      type: 'spacer',
+      title: '',
+      items: [spacerDef.newItem()],
+      layout: { ...spacerDef.defaultLayout },
+    };
+    onAddSection(newSection);
+    onClose();
   };
 
   const handleCreate = () => {
@@ -144,8 +159,9 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="modal-backdrop absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="modal-content relative z-10 w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">Add New Section</h2>
@@ -163,10 +179,23 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 overflow-y-auto flex-1">
+        <div className="px-6 py-4 overflow-y-auto flex-1 overflow-x-hidden">
+          <div key={step} className={stepDirection === 'forward' ? 'animate-step-right' : 'animate-step-left'}>
           {/* ─── STEP 1: Choose section type ─── */}
           {step === 1 && (
             <div className="space-y-3">
+              <button
+                onClick={handleAddSpacer}
+                className="w-full text-left px-4 py-2.5 rounded-lg border border-dashed border-violet-300 hover:border-violet-500 hover:bg-violet-50 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm text-violet-700">Spacer</div>
+                    <div className="text-xs text-violet-400">Add empty vertical space between sections</div>
+                  </div>
+                  <span className="text-violet-400 text-lg leading-none">↕</span>
+                </div>
+              </button>
               {sectionCategories.map((cat) => {
                 const isExpanded = expandedCategory === cat.id;
                 const isSingleType = cat.types.length === 1;
@@ -329,24 +358,6 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
                   </OptionRow>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Rule Under Title</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">Draw a divider line below the section heading</p>
-                  </div>
-                  <button
-                    onClick={() => setLayout('showTitleRule', !draftLayout.showTitleRule)}
-                    className={`relative w-10 h-5.5 rounded-full transition-colors ${
-                      draftLayout.showTitleRule ? 'bg-violet-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                        draftLayout.showTitleRule ? 'left-5' : 'left-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -420,6 +431,7 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Footer navigation */}
@@ -427,7 +439,7 @@ export function SectionModal({ onClose, onAddSection }: SectionModalProps) {
           <div>
             {step > 1 && (
               <button
-                onClick={() => setStep((s) => (s - 1) as WizardStep)}
+                onClick={() => { setStepDirection('back'); setStep((s) => (s - 1) as WizardStep); }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 ← Back

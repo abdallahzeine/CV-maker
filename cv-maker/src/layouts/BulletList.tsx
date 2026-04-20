@@ -12,18 +12,17 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  arrayMove,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { IconStyle } from '../types';
-import { EditableText } from './EditableText';
+import { CVTextEditor } from '../editor/CVTextEditor';
+import { useDispatch } from '../store';
 import { ReorderButtons, DeleteButton, AddButton } from './Buttons';
-import { moveItem } from '../utils/helpers';
 
 interface BulletListProps {
   bullets: string[];
-  onChange: (bullets: string[]) => void;
+  bulletsPath: string;
   iconStyle: IconStyle;
 }
 
@@ -38,18 +37,18 @@ function SortableBullet({
   bulletId,
   icon,
   value,
+  path,
   index,
   total,
-  onUpdate,
   onMove,
   onDelete,
 }: {
   bulletId: string;
   icon: string;
   value: string;
+  path: string;
   index: number;
   total: number;
-  onUpdate: (v: string) => void;
   onMove: (d: -1 | 1) => void;
   onDelete: () => void;
 }) {
@@ -69,7 +68,7 @@ function SortableBullet({
   };
 
   return (
-    <li ref={setNodeRef} style={style} {...attributes} className="flex items-start gap-1 group/bullet">
+    <li ref={setNodeRef} style={style} {...attributes} className="flex items-start gap-1 group/bullet animate-item-in">
       {icon && <span className="shrink-0 select-none mt-0.5">{icon}</span>}
       <div className="no-print flex items-center gap-0.5 shrink-0">
         <ReorderButtons
@@ -80,12 +79,19 @@ function SortableBullet({
         />
         <DeleteButton onClick={onDelete} title="Delete bullet" />
       </div>
-      <EditableText multiline value={value} onChange={onUpdate} placeholder="Bullet point..." className="flex-1" />
+      <CVTextEditor
+        multiline
+        value={value}
+        path={path}
+        placeholder="Bullet point..."
+        className="flex-1"
+      />
     </li>
   );
 }
 
-export function BulletList({ bullets, onChange, iconStyle }: BulletListProps) {
+export function BulletList({ bullets, bulletsPath, iconStyle }: BulletListProps) {
+  const dispatch = useDispatch();
   const icon = iconChar[iconStyle];
 
   const bulletIds = useMemo(
@@ -108,19 +114,26 @@ export function BulletList({ bullets, onChange, iconStyle }: BulletListProps) {
       const oldIndex = bulletIds.indexOf(active.id as string);
       const newIndex = bulletIds.indexOf(over.id as string);
       if (oldIndex !== -1 && newIndex !== -1) {
-        onChange(arrayMove(bullets, oldIndex, newIndex));
+        dispatch({
+          op: 'move',
+          from: `${bulletsPath}[${oldIndex}]`,
+          path: `${bulletsPath}[${newIndex}]`,
+        });
       }
     }
-  }, [bullets, bulletIds, onChange]);
+  }, [bulletIds, bulletsPath, dispatch]);
 
-  const updateBullet = (i: number, v: string) => {
-    const next = [...bullets];
-    next[i] = v;
-    onChange(next);
+  const addBullet = () => dispatch({ op: 'insert', path: `${bulletsPath}[-1]`, value: 'New bullet point.' });
+  const deleteBullet = (i: number) => dispatch({ op: 'delete', path: `${bulletsPath}[${i}]` });
+  const moveBullet = (i: number, delta: -1 | 1) => {
+    const target = i + delta;
+    if (target < 0 || target >= bullets.length) return;
+    dispatch({
+      op: 'move',
+      from: `${bulletsPath}[${i}]`,
+      path: `${bulletsPath}[${target}]`,
+    });
   };
-  const addBullet = () => onChange([...bullets, 'New bullet point.']);
-  const deleteBullet = (i: number) => onChange(bullets.filter((_, j) => j !== i));
-  const moveBullet = (i: number, delta: -1 | 1) => onChange(moveItem(bullets, i, delta));
 
   return (
     <div>
@@ -137,9 +150,9 @@ export function BulletList({ bullets, onChange, iconStyle }: BulletListProps) {
                 bulletId={bulletIds[i]}
                 icon={icon}
                 value={b}
+                path={`${bulletsPath}[${i}]`}
                 index={i}
                 total={bullets.length}
-                onUpdate={(v) => updateBullet(i, v)}
                 onMove={(d) => moveBullet(i, d)}
                 onDelete={() => deleteBullet(i)}
               />

@@ -1,16 +1,17 @@
 import { useState, useCallback, useEffect } from 'react';
-import { initialCVData } from './data/initialCVData';
-import type { CVData, CVItem, CVSection } from './types';
-import { arrayMove } from '@dnd-kit/sortable';
-import { moveItem, newItem, defaultLayoutFor } from './utils/helpers';
-import { loadCVData, saveCVData, clearCVData } from './utils/settings';
-import { Toolbar, SectionModal, CVDocument } from './components';
+import type { CVData, CVSection } from './types';
+import { Toolbar, SectionModal, SavesPanel, ConfirmModal, SplashScreen } from './components';
 import { SidePanel } from './components/SidePanel';
 import { SectionLayoutContent } from './components/SectionLayoutPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadSidePanelWidth, saveSidePanelWidth } from './utils/sidePanel';
+import { createBlankCVData } from './utils/snapshots';
 import { sectionRegistry } from './sections/registry';
+import { useCVSelector, useDispatch, useHistory } from './store';
+import { EditorDocument } from './editor/EditorDocument';
+import { PrintDocument } from './print/PrintDocument';
 
-type PanelType = 'layout-settings';
+type PanelType = 'layout-settings' | 'saves';
 
 interface PanelState {
   type: PanelType;
@@ -18,89 +19,88 @@ interface PanelState {
 }
 
 export default function App() {
-  const [cv, setCv] = useState<CVData>(() => loadCVData());
+  const cv = useCVSelector((s) => s.data);
+  const dispatch = useDispatch();
+  const history = useHistory();
+  const [showSplash, setShowSplash] = useState(true);
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
   const [panel, setPanel] = useState<PanelState | null>(null);
   const [panelWidth, setPanelWidth] = useState(loadSidePanelWidth);
+  const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
+
+  const openConfirm = (message: string, action: () => void) =>
+    setConfirmModal({ message, onConfirm: action });
+  const closeConfirm = () => setConfirmModal(null);
 
   useEffect(() => {
-    saveCVData(cv);
-  }, [cv]);
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const hasCommandModifier = event.ctrlKey || event.metaKey;
+      if (!hasCommandModifier || event.altKey) {
+        return;
+      }
 
-  const updateHeader = useCallback((header: CVData['header']) => {
-    setCv((prev) => ({ ...prev, header }));
-  }, []);
+      const isUndo = key === 'z' && !event.shiftKey;
+      const isRedo = (key === 'z' && event.shiftKey) || key === 'y';
 
-  const updateSection = useCallback((sIdx: number, updated: CVSection) => {
-    setCv((prev) => { const s = [...prev.sections]; s[sIdx] = updated; return { ...prev, sections: s }; });
-  }, []);
+      if (isUndo) {
+        const entry = history.undo();
+        if (!entry) {
+          return;
+        }
 
-  const moveSection = useCallback((sIdx: number, delta: -1 | 1) => {
-    setCv((prev) => ({ ...prev, sections: moveItem(prev.sections, sIdx, delta) }));
-  }, []);
+        event.preventDefault();
+        const result = dispatch(entry.inverse, {
+          origin: 'undo',
+          label: 'history:undo',
+        });
 
-  const reorderSections = useCallback((oldIndex: number, newIndex: number) => {
-    setCv((prev) => ({ ...prev, sections: arrayMove(prev.sections, oldIndex, newIndex) }));
-  }, []);
+        if (!result.success) {
+          history.redo();
+        }
 
-  const changeItem = useCallback((sIdx: number, iIdx: number, item: CVItem) => {
-    setCv((prev) => {
-      const sections = [...prev.sections];
-      const items = [...sections[sIdx].items];
-      items[iIdx] = item;
-      sections[sIdx] = { ...sections[sIdx], items };
-      return { ...prev, sections };
-    });
-  }, []);
+        return;
+      }
 
-  const moveItem_ = useCallback((sIdx: number, iIdx: number, delta: -1 | 1) => {
-    setCv((prev) => {
-      const sections = [...prev.sections];
-      sections[sIdx] = { ...sections[sIdx], items: moveItem(sections[sIdx].items, iIdx, delta) };
-      return { ...prev, sections };
-    });
-  }, []);
+      if (isRedo) {
+        const entry = history.redo();
+        if (!entry) {
+          return;
+        }
 
-  const reorderItems = useCallback((sIdx: number, oldIndex: number, newIndex: number) => {
-    setCv((prev) => {
-      const sections = [...prev.sections];
-      sections[sIdx] = { ...sections[sIdx], items: arrayMove(sections[sIdx].items, oldIndex, newIndex) };
-      return { ...prev, sections };
-    });
-  }, []);
+        event.preventDefault();
+        const result = dispatch(entry.patches, {
+          origin: 'redo',
+          label: 'history:redo',
+        });
 
-  const deleteItem = useCallback((sIdx: number, iIdx: number) => {
-    setCv((prev) => {
-      const sections = [...prev.sections];
-      sections[sIdx] = { ...sections[sIdx], items: sections[sIdx].items.filter((_, i) => i !== iIdx) };
-      return { ...prev, sections };
-    });
-  }, []);
+        if (!result.success) {
+          history.undo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [dispatch, history]);
+
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    const timer = setTimeout(() => {
+      document.getElementById(`section-${pendingScrollId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingScrollId(null);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [pendingScrollId]);
 
   const addSection = useCallback((section: CVSection) => {
-    const withLayout: CVSection = section.layout
-      ? section
-      : { ...section, layout: defaultLayoutFor(section.type) };
-    setCv((prev) => ({ ...prev, sections: [...prev.sections, withLayout] }));
-  }, []);
-
-  const deleteSection = useCallback((sIdx: number) => {
-    setCv((prev) => {
-      if (prev.sections.length <= 1) return prev;
-      return { ...prev, sections: prev.sections.filter((_, i) => i !== sIdx) };
-    });
-  }, []);
-
-  const addItem = useCallback((sIdx: number) => {
-    setCv((prev) => {
-      const sections = [...prev.sections];
-      sections[sIdx] = {
-        ...sections[sIdx],
-        items: [...sections[sIdx].items, newItem(sections[sIdx].type)],
-      };
-      return { ...prev, sections };
-    });
-  }, []);
+    dispatch({ op: 'insert', path: 'sections[-1]', value: section });
+    setPendingScrollId(section.id);
+  }, [dispatch]);
 
   const handlePanelWidthChange = useCallback((w: number) => {
     setPanelWidth(w);
@@ -113,10 +113,9 @@ export default function App() {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset CV to original data? All changes will be lost.')) {
-      clearCVData();
-      setCv(initialCVData);
-    }
+    openConfirm('Reset CV to blank data? All changes will be lost.', () => {
+      dispatch({ op: 'replace', path: '', value: createBlankCVData() });
+    });
   };
 
   const openPanel = useCallback((type: PanelType, sectionId?: string) => {
@@ -127,15 +126,32 @@ export default function App() {
     setPanel(null);
   }, []);
 
+  const handleLoadSnapshot = useCallback((data: CVData) => {
+    openConfirm('Load this snapshot and replace your current CV?', () => {
+      dispatch({ op: 'replace', path: '', value: data });
+      closePanel();
+    });
+  }, [closePanel, dispatch]);
+
+  const handleLoadBlank = useCallback(() => {
+    openConfirm('Load a blank CV and replace your current CV?', () => {
+      dispatch({ op: 'replace', path: '', value: createBlankCVData() });
+      closePanel();
+    });
+  }, [closePanel, dispatch]);
+
   const panelOpen = panel !== null;
   const effectiveWidth = panelOpen ? panelWidth : 0;
 
   return (
+    <>
+    {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
     <div className="transition-[margin-right] duration-300 ease-in-out" style={{ marginRight: effectiveWidth }}>
-      <Toolbar
+<Toolbar
         onReset={handleReset}
         onPrint={handlePrint}
         onAddSection={() => setSectionModalOpen(true)}
+        onOpenSaves={() => setPanel({ type: 'saves' })}
       />
       {sectionModalOpen && (
         <SectionModal
@@ -143,28 +159,36 @@ export default function App() {
           onAddSection={addSection}
         />
       )}
-      <CVDocument
-        cv={cv}
-        onUpdateHeader={updateHeader}
-        onUpdateSection={updateSection}
-        onMoveSection={moveSection}
-        onDeleteSection={deleteSection}
-        onReorderSections={reorderSections}
-        onChangeItem={changeItem}
-        onMoveItem={moveItem_}
-        onReorderItems={reorderItems}
-        onDeleteItem={deleteItem}
-        onAddItem={addItem}
-        onOpenPanel={openPanel}
-      />
+      <ErrorBoundary>
+        <div id="editor-root">
+          <EditorDocument onOpenPanel={openPanel} />
+        </div>
+        <div id="print-root">
+          <PrintDocument doc={cv} />
+        </div>
+      </ErrorBoundary>
+      {confirmModal && (
+        <ConfirmModal
+          message={confirmModal.message}
+          onConfirm={() => { confirmModal.onConfirm(); closeConfirm(); }}
+          onCancel={closeConfirm}
+        />
+      )}
       <SidePanel
         open={panelOpen}
         onClose={closePanel}
         width={panelWidth}
         onWidthChange={handlePanelWidthChange}
-        title={panel?.type === 'layout-settings' ? 'Layout Settings' : ''}
+        title={panel?.type === 'layout-settings' ? 'Layout Settings' : panel?.type === 'saves' ? 'Saved CVs' : ''}
         subtitle={panel?.type === 'layout-settings' && panel.sectionId != null ? (() => { const s = cv.sections.find((x) => x.id === panel.sectionId); return s ? `${(sectionRegistry[s.type] ?? sectionRegistry.custom).label} · ${s.title}` : undefined; })() : undefined}
       >
+        {panel?.type === 'saves' && (
+          <SavesPanel
+            currentCVData={cv}
+            onLoadSnapshot={handleLoadSnapshot}
+            onLoadBlank={handleLoadBlank}
+          />
+        )}
         {panel?.type === 'layout-settings' && panel.sectionId != null && (() => {
           const panelSection = cv.sections.find((x) => x.id === panel.sectionId);
           if (!panelSection) return null;
@@ -172,11 +196,21 @@ export default function App() {
           return (
             <SectionLayoutContent
               section={panelSection}
-              onChangeLayout={(layout) => updateSection(panelSIdx, { ...panelSection, layout })}
+              onChangeLayout={(layout) => dispatch({ op: 'replace', path: `sections[${panelSIdx}].layout`, value: layout })}
             />
           );
         })()}
       </SidePanel>
     </div>
+    <a
+      href="https://abdallahzeine.vercel.app"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="no-print fixed bottom-4 right-4 z-40 rounded-full border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-gray-900"
+      aria-label="Made by Abdallah Zeine Elabidine"
+    >
+      Made by Abdallah Zeine Elabidine
+    </a>
+    </>
   );
 }

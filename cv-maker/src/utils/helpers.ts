@@ -20,7 +20,6 @@ export function defaultLayoutFor(type: SectionType): SectionLayout {
     separator: 'none' as const,
     density: 'compact' as const,
     columns: 1 as const,
-    showTitleRule: false,
   };
   if (type === 'projects') return { ...base, dateSlot: 'hidden' as const, iconStyle: 'bullet' as const, density: 'relaxed' as const };
   if (type === 'work-experience') return { ...base, dateSlot: 'right-inline' as const, iconStyle: 'bullet' as const };

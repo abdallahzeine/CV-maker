@@ -144,24 +144,6 @@ export function SectionLayoutContent({ section, onChangeLayout }: SectionLayoutC
         </OptionRow>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Rule Under Title</h4>
-          <p className="text-xs text-gray-400 mt-0.5">Draw a divider line below the section heading</p>
-        </div>
-        <button
-          onClick={() => set('showTitleRule', !layout.showTitleRule)}
-          className={`relative w-10 h-6 rounded-full transition-colors ${
-            layout.showTitleRule ? 'bg-violet-500' : 'bg-gray-300'
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-              layout.showTitleRule ? 'left-5' : 'left-0.5'
-            }`}
-          />
-        </button>
-      </div>
     </div>
   );
 }

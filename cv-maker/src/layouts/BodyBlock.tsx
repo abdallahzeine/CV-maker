@@ -1,21 +1,21 @@
-import { EditableText } from './EditableText';
+import { CVTextEditor } from '../editor/CVTextEditor';
 
 interface BodyBlockProps {
   value: string;
-  onChange: (v: string) => void;
+  path: string;
   placeholder?: string;
 }
 
-export function BodyBlock({ value, onChange, placeholder = 'Write here...' }: BodyBlockProps) {
+export function BodyBlock({ value, path, placeholder = 'Write here...' }: BodyBlockProps) {
   return (
-    <p className="text-gray-700 text-sm leading-relaxed text-left">
-      <EditableText
+    <div className="text-gray-700 text-sm leading-relaxed text-left">
+      <CVTextEditor
         multiline
         value={value}
-        onChange={onChange}
+        path={path}
         placeholder={placeholder}
         className="text-gray-700 text-sm leading-relaxed"
       />
-    </p>
+    </div>
   );
 }

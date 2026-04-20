@@ -1,7 +1,17 @@
 import type { SectionDef } from './registry';
 import { classicLayouts, professionalLayouts } from '../presets';
 import { BodyBlock } from '../layouts/BodyBlock';
+import { BodyBlockPrint } from '../print/layouts/BodyBlockPrint';
+import { ItemFramePrint } from '../print/layouts/ItemFramePrint';
 import { uid } from '../utils/helpers';
+
+const renderSummaryEditor: NonNullable<SectionDef['renderItemEditor']> = ({ itemPath, item }) => (
+  <BodyBlock
+    value={item.body ?? ''}
+    path={`${itemPath}.body`}
+    placeholder="Write your professional summary..."
+  />
+);
 
 export const summaryDef: SectionDef = {
   type: 'summary',
@@ -22,11 +32,11 @@ export const summaryDef: SectionDef = {
   addItemLabel: 'Add paragraph',
   availablePresetIds: ['classic'],
   newItem: () => ({ id: uid(), body: '' }),
-  renderItem: ({ item, onChange }) => (
-    <BodyBlock
-      value={item.body ?? ''}
-      onChange={(v) => onChange({ ...item, body: v })}
-      placeholder="Write your professional summary..."
-    />
+  renderItemEditor: renderSummaryEditor,
+  renderItem: renderSummaryEditor,
+  renderItemPrint: ({ item, layout }) => (
+    <ItemFramePrint density={layout.density}>
+      <BodyBlockPrint value={item.body ?? ''} />
+    </ItemFramePrint>
   ),
 };

@@ -1,6 +1,6 @@
 import type { SectionType } from '../types';
 
-export type SectionCategory = 'heading-date' | 'body-text' | 'title-bullets' | 'work-experience' | 'custom';
+export type SectionCategory = 'heading-date' | 'body-text' | 'title-bullets' | 'work-experience' | 'custom' | 'spacer';
 
 export interface CategoryDef {
   id: SectionCategory;
@@ -52,4 +52,5 @@ export const categoryByType: Record<SectionType, SectionCategory> = {
   skills: 'body-text',
   projects: 'title-bullets',
   custom: 'custom',
+  spacer: 'spacer',
 };
