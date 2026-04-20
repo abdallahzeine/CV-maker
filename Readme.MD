@@ -1,9 +1,9 @@
-# SiraStudio
+
 
 <div align="center">
 
 <div style="background:#fff; display:inline-block; padding:12px; border-radius:8px;">
-  <img src="./cv-maker/public/Logo.png" alt="SiraStudio Logo" />
+  <img src="./SiraStudio/public/Logo.png" alt="SiraStudio Logo" />
 </div>
 
 <p>
