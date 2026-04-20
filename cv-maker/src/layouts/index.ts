@@ -1,4 +1,3 @@
-export { EditableText } from './EditableText';
 export { ReorderButtons, DeleteButton, AddButton } from './Buttons';
 export { HeadingBlock } from './HeadingBlock';
 export { BulletList } from './BulletList';

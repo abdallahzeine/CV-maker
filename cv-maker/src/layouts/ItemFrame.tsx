@@ -30,10 +30,14 @@ export function ItemFrame({ itemId, density, index, total, onMove, onDelete, chi
     isDragging,
   } = useSortable({ id: itemId });
 
+  const baseTransform = CSS.Transform.toString(transform);
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging ? `${baseTransform ?? ''} scale(1.02)`.trim() : (baseTransform ?? undefined),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
+    boxShadow: isDragging ? '0 8px 25px rgba(0,0,0,0.12)' : undefined,
+    zIndex: isDragging ? 10 : undefined,
+    position: isDragging ? 'relative' : undefined,
   };
 
   return (
@@ -41,7 +45,7 @@ export function ItemFrame({ itemId, density, index, total, onMove, onDelete, chi
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`avoid-break group ${densityClass[density]}`}
+      className={`avoid-break group animate-item-in ${densityClass[density]}`}
     >
       <div className="flex items-start gap-1">
         {!hideControls && (

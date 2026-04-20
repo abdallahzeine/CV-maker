@@ -39,7 +39,8 @@ export type SectionType =
   | 'projects'
   | 'awards'
   | 'volunteering'
-  | 'custom';
+  | 'custom'
+  | 'spacer';
 
 export type DateFormat = 'MM/YYYY' | 'Mon YYYY' | 'YYYY';
 
@@ -89,7 +90,6 @@ export interface SectionLayout {
   separator: Separator;
   density: Density;
   columns: 1 | 2;
-  showTitleRule: boolean;
 }
 
 export interface SectionPreset {

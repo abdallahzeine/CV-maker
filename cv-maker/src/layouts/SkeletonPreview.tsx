@@ -257,10 +257,6 @@ export function LayoutPreviewSkeleton({
 }) {
   const spacing = densitySpacing[layout.density];
 
-  const titleRule = layout.showTitleRule
-    ? <div className="h-px bg-gray-200 mt-1" />
-    : null;
-
   if (category === 'heading-date') {
     return (
       <div className={`w-full ${spacing} text-xs`}>
@@ -276,7 +272,6 @@ export function LayoutPreviewSkeleton({
           date="2022"
           dateSlot={layout.dateSlot}
         />
-        {titleRule}
       </div>
     );
   }
@@ -289,7 +284,6 @@ export function LayoutPreviewSkeleton({
           Passionate about clean architecture and mentoring junior developers.
           Led a team of 8 engineers to deliver a microservices platform serving 2M+ users.
         </p>
-        {titleRule}
       </div>
     );
   }
@@ -305,7 +299,6 @@ export function LayoutPreviewSkeleton({
           </div>
           {layout.dateSlot !== 'hidden' && <div className="text-gray-500 whitespace-nowrap">Jan 2020 – Present</div>}
         </div>
-        {titleRule}
         <div className="flex flex-col gap-0.5">
           {['Led a team of 5 engineers to ship a new product', 'Reduced latency by 40% via query optimization'].map((b, i) => (
             <div key={i} className="flex items-start gap-1.5">
@@ -369,7 +362,6 @@ export function LayoutPreviewSkeleton({
     return (
       <div className={`w-full ${spacing} text-xs`}>
         {heading}
-        {titleRule}
         <div className={`flex flex-col ${layout.density === 'compact' ? 'gap-0.5' : layout.density === 'relaxed' ? 'gap-2' : 'gap-1'}`}>
           {bullets.map((b, i) => (
             <div key={i} className="flex items-start gap-1.5 text-left">
@@ -399,7 +391,6 @@ export function LayoutPreviewSkeleton({
           <span className="text-gray-400 font-medium shrink-0">Language:</span>
           <span className="text-gray-600">Spanish — Intermediate</span>
         </div>
-        {titleRule}
       </div>
     );
   }

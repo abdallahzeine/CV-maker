@@ -9,7 +9,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   education: {
     presetId: 'professional',
@@ -18,7 +17,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   skills: {
     presetId: 'professional',
@@ -27,7 +25,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 2,
-    showTitleRule: false,
   },
   certifications: {
     presetId: 'professional',
@@ -36,7 +33,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   projects: {
     presetId: 'professional',
@@ -45,7 +41,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   awards: {
     presetId: 'professional',
@@ -54,7 +49,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   volunteering: {
     presetId: 'professional',
@@ -63,7 +57,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   'work-experience': {
     presetId: 'professional',
@@ -72,7 +65,6 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
   },
   custom: {
     presetId: 'professional',
@@ -81,6 +73,12 @@ export const professionalLayouts: Record<SectionType, SectionLayout> = {
     separator: 'none',
     density: 'compact',
     columns: 1,
-    showTitleRule: false,
+  },
+  spacer: {
+    dateSlot: 'hidden',
+    iconStyle: 'none',
+    separator: 'none',
+    density: 'normal',
+    columns: 1,
   },
 };

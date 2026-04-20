@@ -1,6 +1,6 @@
 import type {
-  SectionType, CVItem, SectionLayout, CustomSectionSchema,
-  DateSlot, IconStyle, Separator, Density,
+  SectionType, CVItem, CVSection, SectionLayout, CustomSectionSchema,
+  DateFormat, DateSlot, IconStyle, Separator, Density,
 } from '../types';
 import type { SectionCategory } from './categories';
 import { summaryDef } from './summary';
@@ -12,15 +12,31 @@ import { projectsDef } from './projects';
 import { awardsDef } from './awards';
 import { volunteeringDef } from './volunteering';
 import { customDef } from './custom';
+import { spacerDef } from './spacer';
 
-export interface RenderItemProps {
+export interface RenderEditorProps {
   item: CVItem;
+  section: CVSection;
   layout: SectionLayout;
+  sectionIndex: number;
   index: number;
   total: number;
+  itemPath: string;
   onChange: (i: CVItem) => void;
   onMove: (d: -1 | 1) => void;
   onDelete: () => void;
+  /** Only provided for custom sections */
+  schema?: CustomSectionSchema;
+}
+
+export interface RenderPrintProps {
+  item: CVItem;
+  section: CVSection;
+  layout: SectionLayout;
+  sectionIndex: number;
+  index: number;
+  total: number;
+  dateFormat: DateFormat;
   /** Only provided for custom sections */
   schema?: CustomSectionSchema;
 }
@@ -49,7 +65,12 @@ export interface SectionDef {
   addItemLabel: string;
   availablePresetIds: string[];
   newItem: () => CVItem;
-  renderItem: (props: RenderItemProps) => React.ReactNode;
+  renderItemEditor?: (props: RenderEditorProps) => React.ReactNode;
+  renderItemPrint?: (props: RenderPrintProps) => React.ReactNode;
+  /** Backward-compatibility fallback during editor renderer migration. */
+  renderItem?: (props: RenderEditorProps) => React.ReactNode;
+  /** Optional plain-text projection used by downstream features. */
+  itemToText?: (item: CVItem, section: CVSection) => string;
 }
 
 export const sectionRegistry: Record<SectionType, SectionDef> = {
@@ -62,4 +83,5 @@ export const sectionRegistry: Record<SectionType, SectionDef> = {
   awards: awardsDef,
   volunteering: volunteeringDef,
   custom: customDef,
+  spacer: spacerDef,
 };

@@ -2,7 +2,31 @@ import type { SectionDef } from './registry';
 import { classicLayouts, professionalLayouts } from '../presets';
 import { HeadingBlock } from '../layouts/HeadingBlock';
 import { ItemFrame } from '../layouts/ItemFrame';
+import { HeadingBlockPrint } from '../print/layouts/HeadingBlockPrint';
+import { ItemFramePrint } from '../print/layouts/ItemFramePrint';
 import { uid } from '../utils/helpers';
+
+const renderCertificationsEditor: NonNullable<SectionDef['renderItemEditor']> = ({
+  itemPath,
+  item,
+  layout,
+  index,
+  total,
+  onMove,
+  onDelete,
+}) => (
+  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+    <HeadingBlock
+      title={item.title ?? ''}
+      titlePath={`${itemPath}.title`}
+      subtitle={item.subtitle ?? ''}
+      subtitlePath={`${itemPath}.subtitle`}
+      date={item.date ?? ''}
+      datePath={`${itemPath}.date`}
+      dateSlot={layout.dateSlot}
+    />
+  </ItemFrame>
+);
 
 export const certificationsDef: SectionDef = {
   type: 'certifications',
@@ -23,17 +47,16 @@ export const certificationsDef: SectionDef = {
   addItemLabel: 'Add certification',
   availablePresetIds: ['classic'],
   newItem: () => ({ id: uid(), title: '', subtitle: '', date: '' }),
-  renderItem: ({ item, layout, index, total, onChange, onMove, onDelete }) => (
-    <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
-      <HeadingBlock
+  renderItemEditor: renderCertificationsEditor,
+  renderItem: renderCertificationsEditor,
+  renderItemPrint: ({ item, layout }) => (
+    <ItemFramePrint density={layout.density}>
+      <HeadingBlockPrint
         title={item.title ?? ''}
-        onChangeTitle={(v) => onChange({ ...item, title: v })}
-        subtitle={item.subtitle ?? ''}
-        onChangeSubtitle={(v) => onChange({ ...item, subtitle: v })}
-        date={item.date ?? ''}
-        onChangeDate={(v) => onChange({ ...item, date: v })}
+        subtitle={item.subtitle}
+        date={item.date}
         dateSlot={layout.dateSlot}
       />
-    </ItemFrame>
+    </ItemFramePrint>
   ),
 };

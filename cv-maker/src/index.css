@@ -1,8 +1,24 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+#editor-root {
+  display: block;
+}
+
+#print-root {
+  display: none;
+}
+
 /* ── Print styles ─────────────────────────────── */
 @media print {
+  #editor-root {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+  }
+
   /* Reset page chrome completely */
   html, body {
     margin: 0 !important;
@@ -21,7 +37,7 @@
   }
 
   /* Main page area: remove editor top-padding and background */
-  main {
+  #print-root main {
     padding: 0 !important;
     margin: 0 !important;
     background: white !important;
@@ -30,7 +46,7 @@
   }
 
   /* CV card: remove shadow, rounding, and constrain to A4 */
-  #cv-document {
+  #print-root .cv-document {
     box-shadow: none !important;
     border-radius: 0 !important;
     width: 100% !important;
@@ -49,7 +65,7 @@
     display: inline !important;
   }
 
-  a {
+  #print-root a {
     color: black !important;
     text-decoration: none !important;
   }
@@ -59,17 +75,18 @@
     page-break-inside: avoid;
   }
 
+  /* Cancel enter animation — print-root becomes visible fresh so animation restarts at opacity:0 */
+  .cv-document-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   /* Hide ALL editor UI */
   .no-print {
     display: none !important;
   }
 
-  /* Remove focus highlight from editable fields */
-  [contenteditable],
-  [contenteditable]:focus {
-    background: transparent !important;
-    outline: none !important;
-  }
 }
 
 /* ── PDF export — hide editor UI same as print ──── */
@@ -84,15 +101,89 @@ body {
   background: #f0f2f5;
 }
 
+/* Interactive cursor affordance */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="color"]:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 /* contentEditable reset */
 [contenteditable] {
   outline: none;
   caret-color: #3b82f6;
+  cursor: text;
 }
 
 [contenteditable]:focus {
   background: #eff6ff;
   border-radius: 2px;
+}
+
+/* TipTap editor styling (replacement for contentEditable blocks) */
+.cv-text-editor .tiptap {
+  outline: none;
+  caret-color: #3b82f6;
+  cursor: text;
+}
+
+.cv-text-editor .tiptap p {
+  margin: 0;
+}
+
+.cv-text-editor .tiptap:focus {
+  background: #eff6ff;
+  border-radius: 2px;
+}
+
+.cv-text-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+.cv-text-content {
+  min-height: 1em;
+}
+
+.cv-text-editor.single-line .cv-text-content {
+  display: inline-block;
+  min-width: 40px;
+}
+
+.cv-text-editor.single-line {
+  display: inline-block;
+  vertical-align: baseline;
+  max-width: 100%;
+}
+
+.cv-text-editor.multiline .cv-text-content {
+  display: block;
+}
+
+.print-rich-text p {
+  margin: 0;
+}
+
+.print-rich-text-inline,
+.print-rich-text-inline p {
+  display: inline;
+  margin: 0;
 }
 
 /* ── Table Styles for Chat ───────────────────── */
@@ -242,7 +333,7 @@ body {
   }
 
   /* Ensure links are visible in print */
-  header a[href] {
+  #print-root header a[href] {
     color: black !important;
     text-decoration: none !important;
   }
@@ -258,6 +349,10 @@ body {
 
   .print\:hidden {
     display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
   }
 
   /* Ensure SVG icons render in print */
@@ -314,4 +409,143 @@ input[type="color"]::-webkit-color-swatch {
 
 .side-panel-resizing * {
   pointer-events: none !important;
+}
+
+/* ── Smooth scrolling ─────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Section animations ───────────────────────── */
+@keyframes sectionSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sectionSlideOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+.animate-section-in {
+  animation: sectionSlideIn 280ms ease-out;
+}
+
+.animate-section-out {
+  animation: sectionSlideOut 220ms ease-in forwards;
+  pointer-events: none;
+}
+
+/* ── Step slide transitions ───────────────────── */
+@keyframes stepSlideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes stepSlideInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-step-right {
+  animation: stepSlideInRight 200ms ease-out;
+}
+
+.animate-step-left {
+  animation: stepSlideInLeft 200ms ease-out;
+}
+
+/* ── Item entrance animation ──────────────────── */
+@keyframes itemFadeIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-item-in {
+  animation: itemFadeIn 200ms ease-out;
+}
+
+/* ── Splash dot grid ──────────────────────────── */
+@keyframes dotsDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 24px 24px; }
+}
+
+.splash-dots {
+  background-image: radial-gradient(circle, #a0a0a0 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  animation: dotsDrift 3s linear infinite;
+}
+
+.grid-dots-static {
+  background-image: radial-gradient(circle, #a0a0a0 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* ── Splash screen animations ─────────────────── */
+@keyframes splashLogoIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes splashScreenOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.splash-logo-in {
+  animation: splashLogoIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.splash-screen-out {
+  animation: splashScreenOut 500ms ease-in forwards;
+}
+
+
+/* ── CV document slide-in on first load ───────── */
+@keyframes cvSlideUp {
+  from { opacity: 0; transform: translateY(48px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cv-document-enter {
+  animation: cvSlideUp 700ms 2400ms cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.cv-document button,
+.cv-document [role="button"] {
+  cursor: default;
+}
+
+.cv-document .cursor-grab {
+  cursor: grab !important;
+}
+
+.cv-document .cursor-grab:active {
+  cursor: grabbing !important;
+}
+
+/* ── Toolbar ping-pong bounce-in ─────────────── */
+@keyframes toolbarBounceIn {
+  0%   { opacity: 0; transform: translateY(120px) scale(0.6); }
+  55%  { opacity: 1; transform: translateY(-18px) scale(1.05); }
+  75%  { transform: translateY(8px) scale(0.97); }
+  88%  { transform: translateY(-6px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.toolbar-bounce-in {
+  animation: toolbarBounceIn 900ms 2350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Toolbar button depth press */
+.toolbar-btn {
+  transition: transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toolbar-btn:active {
+  transform: translateY(2px) scale(0.95) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+  transition: transform 80ms ease-in, box-shadow 80ms ease-in;
 }

@@ -9,7 +9,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
@@ -19,16 +18,28 @@ import type { SocialLink } from '../../types';
 import { LinkCard } from './LinkCard';
 import { LinkEditor } from './LinkEditor';
 import { getIconByType } from '../../constants/icons';
+import { ConfirmModal } from '../ConfirmModal';
 
 interface LinkManagerProps {
   links: SocialLink[];
-  onChange: (links: SocialLink[]) => void;
+  onAdd: (link: SocialLink) => void;
+  onUpdate: (index: number, link: SocialLink) => void;
+  onDelete: (index: number) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
   layout?: 'compact' | 'grid' | 'list';
 }
 
-export function LinkManager({ links, onChange, layout = 'compact' }: LinkManagerProps) {
+export function LinkManager({
+  links,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onReorder,
+  layout = 'compact',
+}: LinkManagerProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<SocialLink | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -48,14 +59,11 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
       const oldIndex = links.findIndex((link) => link.id === active.id);
       const newIndex = links.findIndex((link) => link.id === over.id);
 
-      const reorderedLinks = arrayMove(links, oldIndex, newIndex).map((link, index) => ({
-        ...link,
-        displayOrder: index,
-      }));
-
-      onChange(reorderedLinks);
+      if (oldIndex >= 0 && newIndex >= 0) {
+        onReorder(oldIndex, newIndex);
+      }
     }
-  }, [links, onChange]);
+  }, [links, onReorder]);
 
   const handleAddLink = () => {
     setEditingLink(null);
@@ -68,29 +76,34 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
   };
 
   const handleDeleteLink = (linkId: string) => {
-    if (window.confirm('Are you sure you want to delete this link?')) {
-      const updatedLinks = links
-        .filter((link) => link.id !== linkId)
-        .map((link, index) => ({ ...link, displayOrder: index }));
-      onChange(updatedLinks);
+    setPendingDeleteId(linkId);
+  };
+
+  const confirmDeleteLink = () => {
+    if (pendingDeleteId) {
+      const index = links.findIndex((link) => link.id === pendingDeleteId);
+      if (index >= 0) onDelete(index);
     }
+    setPendingDeleteId(null);
   };
 
   const handleSaveLink = (link: SocialLink) => {
-    let updatedLinks: SocialLink[];
-    
+    const normalizedLink = {
+      ...link,
+      displayOrder: editingLink ? link.displayOrder : links.length,
+    };
+
     if (editingLink) {
-      // Update existing link
-      updatedLinks = links.map((l) => (l.id === link.id ? link : l));
+      const index = links.findIndex((l) => l.id === link.id);
+      if (index >= 0) {
+        onUpdate(index, normalizedLink);
+      }
     } else {
-      // Add new link
-      updatedLinks = [...links, { ...link, displayOrder: links.length }];
+      onAdd(normalizedLink);
     }
-    
-    onChange(updatedLinks);
   };
 
-  const sortedLinks = [...links].sort((a, b) => a.displayOrder - b.displayOrder);
+  const sortedLinks = links;
 
   // Compact layout (for header)
   if (layout === 'compact') {
@@ -177,6 +190,14 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
             link={editingLink}
           />
         )}
+        {pendingDeleteId && (
+          <ConfirmModal
+            message="Are you sure you want to delete this link?"
+            confirmLabel="Delete"
+            onConfirm={confirmDeleteLink}
+            onCancel={() => setPendingDeleteId(null)}
+          />
+        )}
       </>
     );
   }
@@ -230,6 +251,14 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
             link={editingLink}
           />
         )}
+        {pendingDeleteId && (
+          <ConfirmModal
+            message="Are you sure you want to delete this link?"
+            confirmLabel="Delete"
+            onConfirm={confirmDeleteLink}
+            onCancel={() => setPendingDeleteId(null)}
+          />
+        )}
       </>
     );
   }
@@ -280,6 +309,14 @@ export function LinkManager({ links, onChange, layout = 'compact' }: LinkManager
           onClose={() => setIsEditorOpen(false)}
           onSave={handleSaveLink}
           link={editingLink}
+        />
+      )}
+      {pendingDeleteId && (
+        <ConfirmModal
+          message="Are you sure you want to delete this link?"
+          confirmLabel="Delete"
+          onConfirm={confirmDeleteLink}
+          onCancel={() => setPendingDeleteId(null)}
         />
       )}
     </>

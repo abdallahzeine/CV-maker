@@ -2,9 +2,27 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { createCVStore, CVStoreProvider } from './store'
+import { loadCVData } from './utils/settings'
+import { EditorProvider } from './editor/EditorContext'
+import { installExternalAPI } from './external'
+
+if (import.meta.env.DEV) {
+  void import('./store/__debug')
+}
+
+const initialDocument = loadCVData()
+
+const store = createCVStore(initialDocument)
+
+installExternalAPI(store)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <CVStoreProvider store={store}>
+      <EditorProvider>
+        <App />
+      </EditorProvider>
+    </CVStoreProvider>
   </StrictMode>,
 )

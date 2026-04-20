@@ -8,7 +8,6 @@ const classicWorkExp: SectionLayout = {
   separator: 'none',
   density: 'compact',
   columns: 1,
-  showTitleRule: false,
 };
 
 const classicDateRight: SectionLayout = {
@@ -18,7 +17,6 @@ const classicDateRight: SectionLayout = {
   separator: 'none',
   density: 'compact',
   columns: 1,
-  showTitleRule: false,
 };
 
 const classicNoDate: SectionLayout = {
@@ -28,7 +26,6 @@ const classicNoDate: SectionLayout = {
   separator: 'none',
   density: 'compact',
   columns: 1,
-  showTitleRule: false,
 };
 
 const classicProjects: SectionLayout = {
@@ -38,7 +35,6 @@ const classicProjects: SectionLayout = {
   separator: 'none',
   density: 'relaxed',
   columns: 1,
-  showTitleRule: false,
 };
 
 export const initialCVData: CVData = {
