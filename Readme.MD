@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![SiraStudio Logo](./public/Logo.png)
+![SiraStudio Logo](.\cv-maker\public\Logo.png)
 
 <p>
   <strong>Build polished CVs with a fast, flexible, and modern editor</strong>
