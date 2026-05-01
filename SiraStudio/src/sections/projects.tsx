@@ -79,7 +79,7 @@ const renderProjectsEditor: NonNullable<SectionDef['renderItemEditor']> = ({
   }
 
   return (
-    <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+    <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete} path={itemPath}>
       {titleRow}
       <BulletList
         bullets={item.bullets ?? []}

@@ -1,16 +1,11 @@
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -18,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { CVSection } from '../types';
 import { useDispatch } from '../store';
 import { CVTextEditor } from './CVTextEditor';
+import { useDndSensors } from './useDndSensors';
 import { ReorderButtons, DeleteButton } from '../layouts/Buttons';
 import { SectionRenderer } from '../engine/SectionRenderer';
 
@@ -32,7 +28,7 @@ interface SortableSectionProps {
   total: number;
   isDeleting: boolean;
   onOpenPanel: (type: 'layout-settings', sectionId?: string) => void;
-  onDelete: () => void;
+  onDelete: (sectionId: string, sectionIndex: number) => void;
 }
 
 const SPACER_SIZES = [
@@ -131,7 +127,14 @@ function SpacerSectionEditor({
   );
 }
 
-function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel, onDelete }: SortableSectionProps) {
+const SortableSection = memo(function SortableSection({
+  section,
+  sectionIndex,
+  total,
+  isDeleting,
+  onOpenPanel,
+  onDelete,
+}: SortableSectionProps) {
   const dispatch = useDispatch();
   const {
     attributes,
@@ -149,6 +152,10 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
   };
 
   const animClass = isDeleting ? 'animate-section-out' : 'animate-section-in';
+  const handleDelete = useCallback(() => {
+    if (total <= 1) return;
+    onDelete(section.id, sectionIndex);
+  }, [onDelete, section.id, sectionIndex, total]);
 
   if (section.type === 'spacer') {
     return (
@@ -158,7 +165,7 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
           sectionIndex={sectionIndex}
           total={total}
           listeners={{ ...listeners }}
-          onDelete={onDelete}
+          onDelete={handleDelete}
         />
       </div>
     );
@@ -185,7 +192,7 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
               dragHandleProps={{ ...listeners }}
             />
             <DeleteButton
-              onClick={() => { if (total > 1) onDelete(); }}
+              onClick={handleDelete}
               title="Delete section"
             />
           </div>
@@ -217,9 +224,11 @@ function SortableSection({ section, sectionIndex, total, isDeleting, onOpenPanel
       </section>
     </div>
   );
-}
+});
 
-export function SectionList({ sections, onOpenPanel }: SectionListProps) {
+SortableSection.displayName = 'SortableSection';
+
+export const SectionList = memo(function SectionList({ sections, onOpenPanel }: SectionListProps) {
   const dispatch = useDispatch();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -231,14 +240,7 @@ export function SectionList({ sections, onOpenPanel }: SectionListProps) {
     }, 220);
   }, [dispatch]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const sensors = useDndSensors();
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -273,10 +275,12 @@ export function SectionList({ sections, onOpenPanel }: SectionListProps) {
             total={sections.length}
             isDeleting={deletingId === section.id}
             onOpenPanel={onOpenPanel}
-            onDelete={() => handleDeleteSection(section.id, sectionIndex)}
+            onDelete={handleDeleteSection}
           />
         ))}
       </SortableContext>
     </DndContext>
   );
-}
+});
+
+SectionList.displayName = 'SectionList';

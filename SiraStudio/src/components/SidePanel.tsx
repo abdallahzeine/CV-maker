@@ -9,10 +9,24 @@ interface SidePanelProps {
   onWidthChange: (w: number) => void;
   title: string;
   subtitle?: string;
+  hideHeader?: boolean;
+  bodyClassName?: string;
+  bodyScrollable?: boolean;
   children: React.ReactNode;
 }
 
-export function SidePanel({ open, onClose, width, onWidthChange, title, subtitle, children }: SidePanelProps) {
+export function SidePanel({
+  open,
+  onClose,
+  width,
+  onWidthChange,
+  title,
+  subtitle,
+  hideHeader = false,
+  bodyClassName,
+  bodyScrollable = true,
+  children,
+}: SidePanelProps) {
   const resizeStart = useRef<{ x: number; w: number } | null>(null);
   const isMobile = useMediaQuery('(max-width: 767px)');
 
@@ -73,21 +87,23 @@ export function SidePanel({ open, onClose, width, onWidthChange, title, subtitle
       {/* Content area */}
       <div className="flex-1 flex flex-col bg-white border-l border-gray-200 overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        {!hideHeader && (
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+              {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+        )}
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className={`flex-1 px-6 py-5 ${bodyScrollable ? 'overflow-y-auto' : 'overflow-hidden'} ${bodyClassName ?? ''}`}>
           {children}
         </div>
       </div>

@@ -139,7 +139,7 @@ const renderCustomEditor: NonNullable<SectionDef['renderItemEditor']> = ({
   onDelete,
   schema,
 }) => (
-  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete} path={itemPath}>
     {renderCustomFields(itemPath, item, schema?.fields ?? [], layout)}
   </ItemFrame>
 );

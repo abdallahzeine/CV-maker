@@ -73,10 +73,13 @@ public/uploads/
 .oflder/
 .folder/
 
-# Markdown docs (keep only Readme.MD)
+# Markdown docs (explicit exceptions only)
 *.md
 *.MD
 !Readme.md
+!API_AGENT_IMPROVEMENT_PLAN.md
+!AGENTS.md
 .claude/
 .kilo/
 CVtemplates.html
+*.pyc

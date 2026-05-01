@@ -9,9 +9,18 @@ interface ToolbarProps {
   onPrint: () => void;
   onAddSection: () => void;
   onOpenSaves: () => void;
+  onOpenAI: () => void;
+  panelOffsetX?: number;
 }
 
-export function Toolbar({ onReset, onPrint, onAddSection, onOpenSaves }: ToolbarProps) {
+export function Toolbar({
+  onReset,
+  onPrint,
+  onAddSection,
+  onOpenSaves,
+  onOpenAI,
+  panelOffsetX = 0,
+}: ToolbarProps) {
   const editor = useFocusedEditor();
 
   const formatButtons = [
@@ -39,7 +48,10 @@ export function Toolbar({ onReset, onPrint, onAddSection, onOpenSaves }: Toolbar
   ];
 
   return (
-    <div className="no-print toolbar-bounce-in fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-center gap-2 px-4 py-2 bg-white/95 backdrop-blur border border-gray-200 shadow-lg rounded-2xl print:hidden max-w-[95vw]">
+    <div
+      className="no-print toolbar-bounce-in fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-2 px-4 py-2 bg-white/95 backdrop-blur border border-gray-200 shadow-lg rounded-2xl print:hidden max-w-[95vw]"
+      style={{ left: `calc(50% - ${panelOffsetX}px)` }}
+    >
       <button onClick={onReset}
         className="toolbar-btn h-10 sm:h-auto px-3 py-1.5 text-sm rounded-xl border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors shadow-sm flex items-center gap-1">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,6 +79,13 @@ export function Toolbar({ onReset, onPrint, onAddSection, onOpenSaves }: Toolbar
           <path d="M4 3.5A1.5 1.5 0 0 1 5.5 2h10.879a1.5 1.5 0 0 1 1.06.44l2.121 2.121A1.5 1.5 0 0 1 20 5.621V20.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20.5v-17ZM8 4.5v4h8v-4H8Zm0 9a1 1 0 0 0-1 1v5h10v-5a1 1 0 0 0-1-1H8Z" />
         </svg>
         <span className="hidden sm:inline">Saves</span>
+      </button>
+      <button onClick={onOpenAI}
+        className="toolbar-btn h-10 sm:h-auto px-3 py-1.5 text-sm rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 transition-colors shadow-sm flex items-center gap-1.5">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span className="hidden sm:inline">AI Assistant</span>
       </button>
       <div className="hidden sm:block h-5 w-px bg-gray-200 mx-1" />
       <span className="hidden sm:inline text-xs font-semibold text-gray-500 mr-1 tracking-wide">FORMAT</span>

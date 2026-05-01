@@ -10,4 +10,29 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:8000',
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/@dnd-kit')) {
+            return 'vendor-dnd';
+          }
+          if (id.includes('node_modules/@tiptap')) {
+            return 'vendor-tiptap';
+          }
+          if (id.includes('node_modules/@vercel/analytics')) {
+            return 'vendor-analytics';
+          }
+        },
+      },
+    },
+  },
 })

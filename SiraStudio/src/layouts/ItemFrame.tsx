@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Density } from '../types';
+import { useChangeHighlight } from '../store';
 import { ReorderButtons, DeleteButton } from './Buttons';
 
 interface ItemFrameProps {
@@ -12,6 +13,7 @@ interface ItemFrameProps {
   onDelete: () => void;
   children: React.ReactNode;
   hideControls?: boolean;
+  path?: string;
 }
 
 const densityClass: Record<Density, string> = {
@@ -20,7 +22,7 @@ const densityClass: Record<Density, string> = {
   relaxed: 'mb-2 md:mb-4',
 };
 
-export function ItemFrame({ itemId, density, index, total, onMove, onDelete, children, hideControls = false }: ItemFrameProps) {
+export function ItemFrame({ itemId, density, index, total, onMove, onDelete, children, hideControls = false, path }: ItemFrameProps) {
   const {
     attributes,
     listeners,
@@ -29,6 +31,8 @@ export function ItemFrame({ itemId, density, index, total, onMove, onDelete, chi
     transition,
     isDragging,
   } = useSortable({ id: itemId });
+
+  const highlight = useChangeHighlight(path);
 
   const baseTransform = CSS.Transform.toString(transform);
   const style: React.CSSProperties = {
@@ -45,7 +49,7 @@ export function ItemFrame({ itemId, density, index, total, onMove, onDelete, chi
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`avoid-break group animate-item-in ${densityClass[density]}`}
+      className={`avoid-break group animate-item-in ${densityClass[density]} ${highlight ? 'change-highlight' : ''}`}
     >
       <div className="flex items-start gap-1">
         {!hideControls && (

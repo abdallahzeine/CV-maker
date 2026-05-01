@@ -15,7 +15,7 @@ const renderCertificationsEditor: NonNullable<SectionDef['renderItemEditor']> = 
   onMove,
   onDelete,
 }) => (
-  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete}>
+  <ItemFrame itemId={item.id} density={layout.density} index={index} total={total} onMove={onMove} onDelete={onDelete} path={itemPath}>
     <HeadingBlock
       title={item.title ?? ''}
       titlePath={`${itemPath}.title`}

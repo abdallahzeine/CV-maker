@@ -31,11 +31,18 @@ export interface DispatchOptions {
   label?: string;
 }
 
+export interface RecentChangeEntry {
+  revision: number;
+  at: number;
+  origin: DispatchOptions['origin'];
+}
+
 export interface StoreAPI {
   getSnapshot(): CVDocument;
   subscribe(cb: (doc: CVDocument) => void): () => void;
   dispatch(patch: Patch | Patch[], opts?: DispatchOptions): DispatchResult;
   history: HistoryAPI;
+  getRecentChanges(): Map<string, RecentChangeEntry>;
 }
 
 export type CVSelector<T> = (doc: CVDocument) => T;

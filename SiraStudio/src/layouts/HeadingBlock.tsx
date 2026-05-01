@@ -28,11 +28,11 @@ export function HeadingBlock({
   subtitleClassName = 'text-gray-700 text-sm',
 }: HeadingBlockProps) {
   const dateEl = (date !== undefined && dateSlot !== 'hidden') ? (
-    <span className="text-gray-600 text-sm whitespace-nowrap">
+    <div className="text-gray-600 text-sm whitespace-nowrap">
       {datePath
         ? <CVTextEditor value={date} path={datePath} placeholder="MM/YYYY" />
         : date}
-    </span>
+    </div>
   ) : null;
 
   const locationEl = location !== undefined && locationPath ? (
@@ -40,26 +40,26 @@ export function HeadingBlock({
   ) : null;
 
   const subtitleEl = (subtitle !== undefined && subtitlePath) ? (
-    <p className={subtitleClassName}>
+    <div className={subtitleClassName}>
       <CVTextEditor value={subtitle} path={subtitlePath} placeholder="Subtitle" />
       {locationEl && (
         <> <span className="text-gray-400">·</span> {locationEl}</>
       )}
-    </p>
+    </div>
   ) : locationEl ? (
-    <p className={subtitleClassName}>{locationEl}</p>
+    <div className={subtitleClassName}>{locationEl}</div>
   ) : null;
 
   const roleEl = role !== undefined && rolePath ? (
-    <p className={subtitleClassName}>
+    <div className={subtitleClassName}>
       <CVTextEditor value={role} path={rolePath} placeholder="Role" />
-    </p>
+    </div>
   ) : null;
 
   const titleEl = (
-    <h3 className={`${titleClassName} leading-tight`}>
+    <div className={`${titleClassName} leading-tight`} role="heading" aria-level={3}>
       <CVTextEditor value={title} path={titlePath} placeholder="Title" />
-    </h3>
+    </div>
   );
 
   if (dateSlot === 'right-inline') {
@@ -79,11 +79,11 @@ export function HeadingBlock({
     const hasDate = date && date.trim() !== '';
     return (
       <div className="text-left">
-        <h3 className={`${titleClassName} leading-tight`}>
+        <div className={`${titleClassName} leading-tight`} role="heading" aria-level={3}>
           <CVTextEditor value={title} path={titlePath} placeholder="Title" />
           {hasDate && <span className="text-gray-400 mx-1">–</span>}
           {hasDate && dateEl}
-        </h3>
+        </div>
         {subtitleEl}
         {roleEl}
       </div>

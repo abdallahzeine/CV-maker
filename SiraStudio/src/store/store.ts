@@ -3,6 +3,7 @@ import type {
   DispatchOptions,
   DispatchResult,
   Patch,
+  RecentChangeEntry,
   StoreAPI,
 } from './types';
 import { createDispatcher } from './dispatch';
@@ -13,10 +14,13 @@ function toPatchArray(patch: Patch | Patch[]): Patch[] {
   return Array.isArray(patch) ? patch : [patch];
 }
 
+const HIGHLIGHT_TTL = 10_000;
+
 export function createCVStore(initial: CVDocument): StoreAPI {
   const state = { document: initial };
   const listeners = new Set<(nextDoc: CVDocument) => void>();
   const history = createHistory();
+  const recentChanges = new Map<string, RecentChangeEntry>();
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const schedulePersist = (doc: CVDocument) => {
@@ -41,6 +45,17 @@ export function createCVStore(initial: CVDocument): StoreAPI {
     return () => {
       listeners.delete(cb);
     };
+  };
+
+  const getRecentChanges = () => recentChanges;
+
+  const pruneRecentChanges = () => {
+    const cutoff = Date.now() - HIGHLIGHT_TTL;
+    for (const [path, entry] of recentChanges) {
+      if (entry.at < cutoff) {
+        recentChanges.delete(path);
+      }
+    }
   };
 
   const baseDispatch = createDispatcher(state);
@@ -68,6 +83,16 @@ export function createCVStore(initial: CVDocument): StoreAPI {
         });
       }
 
+      const now = Date.now();
+      for (const p of result.appliedPatches ?? []) {
+        recentChanges.set(p.path, {
+          revision: result.revision ?? state.document.revision,
+          at: now,
+          origin,
+        });
+      }
+      pruneRecentChanges();
+
       schedulePersist(state.document);
       notify();
     }
@@ -80,5 +105,6 @@ export function createCVStore(initial: CVDocument): StoreAPI {
     subscribe,
     dispatch,
     history,
+    getRecentChanges,
   };
 }

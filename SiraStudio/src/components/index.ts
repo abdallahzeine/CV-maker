@@ -5,4 +5,5 @@ export * from './SectionLayoutPanel';
 export * from './SavesPanel';
 export * from './SidePanel';
 export * from './SplashScreen';
+export * from './AIAssistant';
 export * from './links';

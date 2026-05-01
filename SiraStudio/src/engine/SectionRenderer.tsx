@@ -2,21 +2,17 @@ import { useCallback, Fragment } from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { CVSection, CVItem } from '../types';
 import { sectionRegistry } from '../sections/registry';
 import { useDispatch } from '../store';
 import { AddButton } from '../layouts/Buttons';
+import { useDndSensors } from '../editor/useDndSensors';
 
 interface SectionRendererProps {
   sectionIndex: number;
@@ -31,15 +27,9 @@ export function SectionRenderer({
   const def = sectionRegistry[section.type] ?? sectionRegistry.custom;
   const renderEditor = def.renderItemEditor ?? def.renderItem;
   const { items, layout, schema } = section;
+  const visibleItems = def.singleItem ? items.slice(0, 1) : items;
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const sensors = useDndSensors();
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -94,10 +84,10 @@ export function SectionRenderer({
       onDragEnd={handleDragEnd}
     >
       <SortableContext
-        items={items.map((item) => item.id)}
+        items={visibleItems.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
-        {items.map((item, idx) => (
+        {visibleItems.map((item, idx) => (
           <Fragment key={item.id}>
             {renderEditor({
               item,

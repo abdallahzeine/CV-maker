@@ -10,27 +10,39 @@ interface MagnetState {
   active: boolean;
 }
 
-function useMagnet(strength = 0.35, radius = 120) {
-  const ref = useRef<HTMLElement>(null);
+function useMagnet(
+  ref: React.RefObject<HTMLElement | null>,
+  strength = 0.35,
+  radius = 120,
+) {
   const [pos, setPos] = useState<MagnetState>({ x: 0, y: 0, active: false });
+  const rafRef = useRef<number | null>(null);
 
   const onMove = useCallback((mx: number, my: number) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = mx - cx;
-    const dy = my - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < radius) {
-      setPos({ x: dx * strength, y: dy * strength, active: true });
-    } else {
-      setPos({ x: 0, y: 0, active: false });
-    }
-  }, [strength, radius]);
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = mx - cx;
+      const dy = my - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < radius) {
+        setPos({ x: dx * strength, y: dy * strength, active: true });
+      } else {
+        setPos({ x: 0, y: 0, active: false });
+      }
+    });
+  }, [ref, strength, radius]);
 
   const onLeave = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setPos({ x: 0, y: 0, active: false });
   }, []);
 
@@ -41,18 +53,21 @@ function useMagnet(strength = 0.35, radius = 120) {
       : 'transform 500ms cubic-bezier(0.23, 1, 0.32, 1)',
   };
 
-  return { ref, style, onMove, onLeave };
+  return { style, onMove, onLeave };
 }
 
 export function SplashScreen({ onDone }: SplashScreenProps) {
   const [pulling, setPulling] = useState(false);
-  const logo = useMagnet(0.4, 280);
-  const btn = useMagnet(0.5, 250);
-  const credit = useMagnet(0.35, 270);
+  const creditRef = useRef<HTMLAnchorElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const credit = useMagnet(creditRef, 0.35, 270);
+  const logo = useMagnet(logoRef, 0.4, 280);
+  const btn = useMagnet(btnRef, 0.5, 250);
 
   function handleStart() {
     setPulling(true);
-    setTimeout(onDone, 600);
+    setTimeout(onDone, 300);
   }
 
   function handleMouseMove(e: React.MouseEvent) {
@@ -72,14 +87,14 @@ export function SplashScreen({ onDone }: SplashScreenProps) {
       className="no-print fixed inset-0 z-[200] flex items-center justify-center bg-[#f0f2f5] splash-dots"
       style={{
         transform: pulling ? 'translateY(-100%)' : 'translateY(0)',
-        transition: pulling ? 'transform 600ms cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+        transition: pulling ? 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex flex-col items-center gap-8">
         <a
-          ref={credit.ref as React.RefObject<HTMLAnchorElement>}
+          ref={creditRef}
           href="https://abdallahzeine.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
@@ -90,7 +105,7 @@ export function SplashScreen({ onDone }: SplashScreenProps) {
           Made by Abdallah Zeine Elabidine
         </a>
         <img
-          ref={logo.ref as React.RefObject<HTMLImageElement>}
+          ref={logoRef}
           src="/Logo.png"
           alt="Logo"
           className="h-16 drop-shadow"
@@ -98,7 +113,7 @@ export function SplashScreen({ onDone }: SplashScreenProps) {
           style={logo.style}
         />
         <button
-          ref={btn.ref as React.RefObject<HTMLButtonElement>}
+          ref={btnRef}
           onClick={handleStart}
           className="px-6 py-2 rounded-full bg-white text-sm font-medium text-gray-800 border border-gray-200 shadow hover:shadow-md hover:bg-gray-50 active:scale-95"
           style={btn.style}

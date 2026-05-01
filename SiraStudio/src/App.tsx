@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import type { CVData, CVSection } from './types';
-import { Toolbar, SectionModal, SavesPanel, ConfirmModal, SplashScreen } from './components';
+import { Toolbar, SectionModal, SavesPanel, ConfirmModal, SplashScreen, AIAssistant } from './components';
 import { PrintTutorialModal } from './components/PrintTutorialModal.tsx';
 import { hasSeenPrintTutorial, markPrintTutorialSeen } from './utils/printTutorial.ts';
 import { SidePanel } from './components/SidePanel';
@@ -8,13 +8,14 @@ import { SectionLayoutContent } from './components/SectionLayoutPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadSidePanelWidth, saveSidePanelWidth } from './utils/sidePanel';
 import { useMediaQuery } from './utils/useMediaQuery';
-import { createBlankCVData } from './utils/snapshots';
+import { createBlankCVData, isValidCVData } from './utils/snapshots';
 import { sectionRegistry } from './sections/registry';
 import { useCVSelector, useDispatch, useHistory } from './store';
-import { EditorDocument } from './editor/EditorDocument';
-import { PrintDocument } from './print/PrintDocument';
 
-type PanelType = 'layout-settings' | 'saves';
+const EditorDocument = lazy(() => import('./editor/EditorDocument').then((m) => ({ default: m.EditorDocument })));
+const PrintDocument = lazy(() => import('./print/PrintDocument').then((m) => ({ default: m.PrintDocument })));
+
+type PanelType = 'layout-settings' | 'saves' | 'agent';
 
 interface PanelState {
   type: PanelType;
@@ -23,6 +24,7 @@ interface PanelState {
 
 export default function App() {
   const cv = useCVSelector((s) => s.data);
+  const revision = useCVSelector((s) => s.revision);
   const dispatch = useDispatch();
   const history = useHistory();
   const [showSplash, setShowSplash] = useState(true);
@@ -32,6 +34,11 @@ export default function App() {
   const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [showPrintTutorial, setShowPrintTutorial] = useState(false);
   const [printAfterTutorial, setPrintAfterTutorial] = useState(false);
+
+  useEffect(() => {
+    void import('./editor/EditorDocument');
+    void import('./print/PrintDocument');
+  }, []);
 
   const openConfirm = (message: string, action: () => void) =>
     setConfirmModal({ message, onConfirm: action });
@@ -164,9 +171,19 @@ export default function App() {
     });
   }, [closePanel, dispatch]);
 
+  const handleApplyAgentCV = useCallback((data: CVData) => {
+    if (!isValidCVData(data)) {
+      console.error('[agent] Ignored invalid CV payload', data);
+      return;
+    }
+
+    dispatch({ op: 'replace', path: '', value: data }, { origin: 'agent', label: 'agent:apply' });
+  }, [dispatch]);
+
   const panelOpen = panel !== null;
   const effectiveWidth = panelOpen ? panelWidth : 0;
   const isMobile = useMediaQuery('(max-width: 767px)');
+  const toolbarOffsetX = panelOpen && !isMobile ? panelWidth / 2 : 0;
 
   return (
     <>
@@ -177,6 +194,8 @@ export default function App() {
         onPrint={handlePrint}
         onAddSection={() => setSectionModalOpen(true)}
         onOpenSaves={() => setPanel({ type: 'saves' })}
+        onOpenAI={() => setPanel({ type: 'agent' })}
+        panelOffsetX={toolbarOffsetX}
       />
       {sectionModalOpen && (
         <SectionModal
@@ -184,14 +203,18 @@ export default function App() {
           onAddSection={addSection}
         />
       )}
-      <ErrorBoundary>
-        <div id="editor-root">
-          <EditorDocument onOpenPanel={openPanel} />
-        </div>
-        <div id="print-root">
-          <PrintDocument doc={cv} />
-        </div>
-      </ErrorBoundary>
+      {!showSplash && (
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <div id="editor-root">
+              <EditorDocument onOpenPanel={openPanel} />
+            </div>
+            <div id="print-root">
+              <PrintDocument doc={cv} />
+            </div>
+          </Suspense>
+        </ErrorBoundary>
+      )}
       {confirmModal && (
         <ConfirmModal
           message={confirmModal.message}
@@ -207,8 +230,11 @@ export default function App() {
         onClose={closePanel}
         width={panelWidth}
         onWidthChange={handlePanelWidthChange}
-        title={panel?.type === 'layout-settings' ? 'Layout Settings' : panel?.type === 'saves' ? 'Saved CVs' : ''}
+        title={panel?.type === 'layout-settings' ? 'Layout Settings' : panel?.type === 'saves' ? 'Saved CVs' : panel?.type === 'agent' ? 'AI Assistant' : ''}
         subtitle={panel?.type === 'layout-settings' && panel.sectionId != null ? (() => { const s = cv.sections.find((x) => x.id === panel.sectionId); return s ? `${(sectionRegistry[s.type] ?? sectionRegistry.custom).label} · ${s.title}` : undefined; })() : undefined}
+        hideHeader={panel?.type === 'agent'}
+        bodyClassName={panel?.type === 'agent' ? 'flex min-h-0 flex-col overflow-hidden !px-0 !py-0' : undefined}
+        bodyScrollable={panel?.type !== 'agent'}
       >
         {panel?.type === 'saves' && (
           <SavesPanel
@@ -217,6 +243,9 @@ export default function App() {
             onLoadBlank={handleLoadBlank}
             onShowTutorial={handleShowTutorial}
           />
+        )}
+        {panel?.type === 'agent' && (
+          <AIAssistant cv={cv} revision={revision} onApplyCV={handleApplyAgentCV} onClose={closePanel} />
         )}
         {panel?.type === 'layout-settings' && panel.sectionId != null && (() => {
           const panelSection = cv.sections.find((x) => x.id === panel.sectionId);
@@ -235,7 +264,7 @@ export default function App() {
       href="https://abdallahzeine.vercel.app"
       target="_blank"
       rel="noopener noreferrer"
-      className="no-print hidden md:block fixed bottom-4 right-4 z-40 rounded-full border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-gray-900"
+      className="no-print hidden md:block fixed bottom-4 right-4 z-30 rounded-full border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-gray-900"
       aria-label="Made by Abdallah Zeine Elabidine"
     >
       Made by Abdallah Zeine Elabidine

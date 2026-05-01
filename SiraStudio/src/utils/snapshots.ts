@@ -42,7 +42,7 @@ function cloneValue<T>(value: T): T {
   }
 }
 
-function isValidCVData(value: unknown): value is CVData {
+export function isValidCVData(value: unknown): value is CVData {
   if (!isRecord(value)) return false;
   if (!isRecord(value.header)) return false;
   if (!Array.isArray(value.sections)) return false;

@@ -2,21 +2,17 @@ import { useCallback, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { CVItem, SkillGroup } from '../types';
 import { CVTextEditor } from '../editor/CVTextEditor';
+import { useDndSensors } from '../editor/useDndSensors';
 import { useDispatch } from '../store';
 import { ReorderButtons, DeleteButton, AddButton } from './Buttons';
 import { uid } from '../utils/helpers';
@@ -92,14 +88,7 @@ export function SkillGrid({ path, item }: SkillGridProps) {
   const dispatch = useDispatch();
   const groups = useMemo(() => item.skillGroups ?? [], [item.skillGroups]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const sensors = useDndSensors();
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
